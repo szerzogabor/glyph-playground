@@ -32,6 +32,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -114,6 +115,7 @@ private fun GlyphPlaygroundApp(repo: PatternRepository, glyph: GlyphController) 
     var screen by remember { mutableStateOf(Screen.EDITOR) }
     var activeLeds by remember { mutableStateOf(setOf<Int>()) }
     var patterns by remember { mutableStateOf(repo.loadAll()) }
+    var editingPattern by remember { mutableStateOf<GlyphPattern?>(null) }
 
     val refreshPatterns = { patterns = repo.loadAll() }
 
@@ -129,13 +131,24 @@ private fun GlyphPlaygroundApp(repo: PatternRepository, glyph: GlyphController) 
                 onOpenLibrary = { screen = Screen.LIBRARY },
                 repo = repo,
                 glyph = glyph,
-                onPatternSaved = refreshPatterns
+                editingPattern = editingPattern,
+                onPatternSaved = {
+                    editingPattern = null
+                    refreshPatterns()
+                },
+                onCancelEdit = { editingPattern = null }
             )
             Screen.LIBRARY -> LibraryScreen(
                 patterns = patterns,
                 onBack = { screen = Screen.EDITOR },
                 onSelect = { pattern ->
                     activeLeds = pattern.activeLeds
+                    editingPattern = null
+                    screen = Screen.EDITOR
+                },
+                onModify = { pattern ->
+                    activeLeds = pattern.activeLeds
+                    editingPattern = pattern
                     screen = Screen.EDITOR
                 },
                 onDelete = { pattern ->
@@ -154,7 +167,9 @@ private fun EditorScreen(
     onOpenLibrary: () -> Unit,
     repo: PatternRepository,
     glyph: GlyphController,
-    onPatternSaved: () -> Unit
+    editingPattern: GlyphPattern?,
+    onPatternSaved: () -> Unit,
+    onCancelEdit: () -> Unit
 ) {
     var showSaveDialog by remember { mutableStateOf(false) }
     var glyphOn by remember { mutableStateOf(false) }
@@ -184,12 +199,14 @@ private fun EditorScreen(
                     letterSpacing = 4.sp
                 )
                 Text(
-                    text = "PLAYGROUND",
-                    color = NothingDim,
+                    text = if (editingPattern != null) "EDITING · ${editingPattern.name}" else "PLAYGROUND",
+                    color = if (editingPattern != null) NothingAccent else NothingDim,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Medium,
                     fontFamily = FontFamily.SansSerif,
-                    letterSpacing = 6.sp
+                    letterSpacing = if (editingPattern != null) 2.sp else 6.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
             IconButton(onClick = onOpenLibrary) {
@@ -247,6 +264,48 @@ private fun EditorScreen(
 
         Spacer(Modifier.weight(1f))
 
+        if (editingPattern != null) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                OutlinedButton(
+                    onClick = {
+                        onLedsChanged(emptySet())
+                        onCancelEdit()
+                    },
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = NothingDim),
+                    contentPadding = PaddingValues(vertical = 14.dp)
+                ) {
+                    Text("Cancel", fontSize = 14.sp)
+                }
+
+                Button(
+                    onClick = {
+                        repo.save(editingPattern.copy(activeLeds = activeLeds))
+                        onPatternSaved()
+                        Toast.makeText(context, "Pattern updated!", Toast.LENGTH_SHORT).show()
+                    },
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = NothingAccent,
+                        contentColor = NothingBlack
+                    ),
+                    enabled = activeLeds.isNotEmpty(),
+                    contentPadding = PaddingValues(vertical = 14.dp)
+                ) {
+                    Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text("Update", fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                }
+            }
+        }
+
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -283,11 +342,9 @@ private fun EditorScreen(
             Button(
                 onClick = {
                     if (glyphOn) {
-                        // Glyph is on → turn it off.
                         glyph.clear()
                         glyphOn = false
                     } else {
-                        // Glyph is off → turn it on (no preview screen).
                         if (activeLeds.isNotEmpty()) {
                             glyph.displayPattern(activeLeds)
                             glyphOn = true
@@ -373,6 +430,7 @@ private fun LibraryScreen(
     patterns: List<GlyphPattern>,
     onBack: () -> Unit,
     onSelect: (GlyphPattern) -> Unit,
+    onModify: (GlyphPattern) -> Unit,
     onDelete: (GlyphPattern) -> Unit
 ) {
     val statusBarPadding = WindowInsets.statusBars.asPaddingValues()
@@ -440,6 +498,7 @@ private fun LibraryScreen(
                     PatternCard(
                         pattern = pattern,
                         onClick = { onSelect(pattern) },
+                        onModify = { onModify(pattern) },
                         onDelete = { onDelete(pattern) }
                     )
                 }
@@ -452,6 +511,7 @@ private fun LibraryScreen(
 private fun PatternCard(
     pattern: GlyphPattern,
     onClick: () -> Unit,
+    onModify: () -> Unit,
     onDelete: () -> Unit
 ) {
     var showDeleteConfirm by remember { mutableStateOf(false) }
@@ -498,6 +558,17 @@ private fun PatternCard(
                         color = NothingDim,
                         fontSize = 11.sp,
                         fontFamily = FontFamily.Monospace
+                    )
+                }
+                IconButton(
+                    onClick = onModify,
+                    modifier = Modifier.size(32.dp)
+                ) {
+                    Icon(
+                        Icons.Default.Edit,
+                        contentDescription = "Modify",
+                        tint = NothingAccent,
+                        modifier = Modifier.size(16.dp)
                     )
                 }
                 IconButton(
