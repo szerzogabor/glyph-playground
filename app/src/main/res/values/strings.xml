@@ -1,4 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Glyph Playground</string>
+    <string name="widget_title">GLYPH</string>
+    <string name="widget_edit">EDIT</string>
+    <string name="widget_empty">No glyphs yet.\nTap to choose.</string>
+    <string name="widget_label">Glyph Matrix</string>
 </resources>

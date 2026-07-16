@@ -65,6 +65,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.emberforge.generated.glyphplayground.ui.GlyphMatrixCanvas
 import com.emberforge.generated.glyphplayground.ui.GlyphMatrixPreview
+import com.emberforge.generated.glyphplayground.widget.GlyphWidgetProvider
 
 private val NothingBlack = Color(0xFF000000)
 private val NothingCard = Color(0xFF161616)
@@ -117,7 +118,12 @@ private fun GlyphPlaygroundApp(repo: PatternRepository, glyph: GlyphController) 
     var patterns by remember { mutableStateOf(repo.loadAll()) }
     var editingPattern by remember { mutableStateOf<GlyphPattern?>(null) }
 
-    val refreshPatterns = { patterns = repo.loadAll() }
+    val context = LocalContext.current
+    val refreshPatterns = {
+        patterns = repo.loadAll()
+        // Keep any placed home-screen widgets in sync with the library.
+        GlyphWidgetProvider.refreshAll(context)
+    }
 
     Box(
         modifier = Modifier
