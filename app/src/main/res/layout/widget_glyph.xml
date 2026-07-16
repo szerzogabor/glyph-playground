@@ -6,16 +6,17 @@
     android:background="@drawable/widget_background"
     android:padding="8dp">
 
-    <ListView
+    <!--
+        StackView shows exactly one glyph at a time and snaps to the next/prev
+        on a vertical swipe — it can never rest between two glyphs. loopViews
+        lets it roll past the ends back around.
+    -->
+    <StackView
         android:id="@+id/widget_list"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:divider="@null"
-        android:dividerHeight="0dp"
-        android:scrollbars="vertical"
-        android:fadeScrollbars="true"
-        android:scrollbarThumbVertical="@drawable/widget_scrollbar"
-        android:scrollbarSize="3dp" />
+        android:loopViews="true"
+        android:gravity="center" />
 
     <TextView
         android:id="@+id/widget_empty"

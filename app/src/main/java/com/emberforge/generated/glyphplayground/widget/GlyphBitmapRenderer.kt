@@ -13,8 +13,8 @@ import com.emberforge.generated.glyphplayground.GlyphLayout
  * disc of round LED dots.
  *
  * When [lit] is true the glyph is the one currently displayed on the physical
- * Glyph Matrix: its dots glow in the Nothing accent and an accent ring is
- * drawn around the disc. This is the widget's active-state cue — no text.
+ * Glyph Matrix: its dots glow in the Nothing accent green. That green is the
+ * widget's active-state cue — no ring, no text.
  */
 object GlyphBitmapRenderer {
 
@@ -59,16 +59,6 @@ object GlyphBitmapRenderer {
         }
 
         canvas.restoreToCount(save)
-
-        if (lit) {
-            val stroke = (size * 0.04f).coerceAtLeast(2f)
-            val ringPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                style = Paint.Style.STROKE
-                strokeWidth = stroke
-                color = COLOR_ACCENT
-            }
-            canvas.drawCircle(cx, cy, radius - stroke, ringPaint)
-        }
 
         return bitmap
     }
