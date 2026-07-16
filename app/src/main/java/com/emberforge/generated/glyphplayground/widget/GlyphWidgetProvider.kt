@@ -13,8 +13,8 @@ import com.emberforge.generated.glyphplayground.R
 
 /**
  * Home-screen widget that lists the saved glyphs assigned to it. The list
- * scrolls when more than one glyph is shown, and tapping a glyph toggles it
- * on/off on the physical Glyph Matrix.
+ * scrolls when more than one glyph is shown, and tapping a glyph selects it as
+ * the one the "Glyph Playground" Glyph Toy displays on the physical matrix.
  */
 class GlyphWidgetProvider : AppWidgetProvider() {
 
@@ -34,15 +34,18 @@ class GlyphWidgetProvider : AppWidgetProvider() {
         }
     }
 
+    /**
+     * Selects (arms) the tapped glyph for the Glyph Toy, or de-selects it when
+     * it is already selected. The Glyph Matrix can only be driven from the
+     * background through the "Glyph Playground" Glyph Toy, so the widget picks
+     * which saved glyph the toy displays; the physical Glyph button shows and
+     * toggles it.
+     */
     private fun handleToggle(context: Context, glyphId: String) {
-        val pattern = PatternRepository(context).loadAll().find { it.id == glyphId } ?: return
-        if (WidgetPrefs.getActiveGlyphId(context) == glyphId) {
-            WidgetPrefs.setActiveGlyphId(context, null)
-            GlyphDisplayService.clear(context)
-        } else {
-            WidgetPrefs.setActiveGlyphId(context, glyphId)
-            GlyphDisplayService.display(context, pattern.activeLeds)
-        }
+        val exists = PatternRepository(context).loadAll().any { it.id == glyphId }
+        if (!exists) return
+        val current = WidgetPrefs.getActiveGlyphId(context)
+        WidgetPrefs.setActiveGlyphId(context, if (current == glyphId) null else glyphId)
         refreshAll(context)
     }
 
