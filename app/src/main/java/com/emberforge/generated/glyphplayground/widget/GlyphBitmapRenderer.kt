@@ -11,6 +11,10 @@ import com.emberforge.generated.glyphplayground.GlyphLayout
  * widget via `RemoteViews.setImageViewBitmap`. Compose Canvas can't be used
  * in widgets, so this mirrors the look of `GlyphMatrixPreview`: a circular
  * disc of round LED dots.
+ *
+ * When [lit] is true the glyph is the one currently displayed on the physical
+ * Glyph Matrix: its dots glow in the Nothing accent and an accent ring is
+ * drawn around the disc. This is the widget's active-state cue — no text.
  */
 object GlyphBitmapRenderer {
 
@@ -19,8 +23,9 @@ object GlyphBitmapRenderer {
     private const val COLOR_BG = 0xFF080808.toInt()
     private const val COLOR_LED_OFF = 0xFF1A1A1A.toInt()
     private const val COLOR_LED_ON = 0xFFFFFFFF.toInt()
+    private const val COLOR_ACCENT = 0xFFD0FD3E.toInt()
 
-    fun render(activeLeds: Set<Int>, sizePx: Int): Bitmap {
+    fun render(activeLeds: Set<Int>, sizePx: Int, lit: Boolean = false): Bitmap {
         val size = sizePx.coerceAtLeast(G)
         val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
@@ -40,12 +45,13 @@ object GlyphBitmapRenderer {
         val gap = (cell * 0.08f).coerceAtLeast(0.5f)
         val dot = cell - 2 * gap
         val dotPaint = Paint(Paint.ANTI_ALIAS_FLAG)
+        val ledOn = if (lit) COLOR_ACCENT else COLOR_LED_ON
 
         for (row in 0 until G) {
             for (col in 0 until G) {
                 val idx = row * G + col
                 if (!GlyphLayout.isInsideCircle(idx)) continue
-                dotPaint.color = if (idx in activeLeds) COLOR_LED_ON else COLOR_LED_OFF
+                dotPaint.color = if (idx in activeLeds) ledOn else COLOR_LED_OFF
                 val left = col * cell + gap
                 val top = row * cell + gap
                 canvas.drawCircle(left + dot / 2f, top + dot / 2f, dot / 2f, dotPaint)
@@ -53,6 +59,17 @@ object GlyphBitmapRenderer {
         }
 
         canvas.restoreToCount(save)
+
+        if (lit) {
+            val stroke = (size * 0.04f).coerceAtLeast(2f)
+            val ringPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                style = Paint.Style.STROKE
+                strokeWidth = stroke
+                color = COLOR_ACCENT
+            }
+            canvas.drawCircle(cx, cy, radius - stroke, ringPaint)
+        }
+
         return bitmap
     }
 }
