@@ -53,7 +53,7 @@ private class GlyphWidgetFactory(
             GlyphBitmapRenderer.render(pattern.activeLeds, BITMAP_PX)
         )
         views.setTextViewText(R.id.item_name, pattern.name)
-        views.setTextViewText(R.id.item_state, if (active) "SELECTED" else "TAP TO SELECT")
+        views.setTextViewText(R.id.item_state, if (active) "ON" else "OFF")
         views.setTextColor(R.id.item_state, if (active) COLOR_ON else COLOR_DIM)
         views.setInt(
             R.id.item_root,
