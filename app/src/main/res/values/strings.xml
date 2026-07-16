@@ -5,4 +5,6 @@
     <string name="widget_edit">EDIT</string>
     <string name="widget_empty">No glyphs yet.\nTap to choose.</string>
     <string name="widget_label">Glyph Matrix</string>
+    <string name="toy_name">Glyph Playground</string>
+    <string name="toy_summary">Show your saved glyphs on the Glyph Matrix</string>
 </resources>
