@@ -2,6 +2,17 @@
 
 This is an **Android application**, scaffolded by EmberForge Forge.
 
+## What it does
+
+Glyph Playground is a drawing/design tool for the Nothing Phone 3 Glyph
+Matrix. Users can:
+- See the Glyph Matrix rendered on-screen as it appears on the physical phone
+- Toggle individual LEDs on/off by tapping or dragging
+- Save named patterns to local storage
+- Load saved patterns from a library
+- Preview patterns in a fullscreen "Glyph preview" mode
+- (Future) Display patterns on the actual Glyph hardware via the Nothing SDK
+
 ## What CI does
 
 On every push to `main`, `.github/workflows/ci.yml`:
@@ -27,9 +38,15 @@ On every push to `main`, `.github/workflows/ci.yml`:
 
 - `app/` — the application module (`namespace`/`applicationId`
   `com.emberforge.generated.glyphplayground`).
-  - `src/main/java/com/emberforge/generated/glyphplayground/MainActivity.kt` — a single
-    Compose `Activity` rendering a "Hello World" screen. Grow the UI
-    from here.
+  - `src/main/java/com/emberforge/generated/glyphplayground/`
+    - `MainActivity.kt` — single Compose Activity with Editor, Library,
+      and Preview screens.
+    - `GlyphLayout.kt` — LED position definitions for the Nothing Phone 3
+      Glyph Matrix (camera ring, strips, 3×11 dot matrix, accent LED).
+    - `GlyphPattern.kt` — `GlyphPattern` data class and
+      `PatternRepository` (SharedPreferences-backed storage).
+    - `ui/GlyphMatrixCanvas.kt` — Compose Canvas rendering the phone
+      outline and interactive LED grid, with tap and drag support.
   - `src/main/AndroidManifest.xml`, `src/main/res/` — manifest and
     resources.
 - `build.gradle.kts`, `settings.gradle.kts` — Gradle setup (AGP + Kotlin
