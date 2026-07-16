@@ -4,14 +4,24 @@ This is an **Android application**, scaffolded by EmberForge Forge.
 
 ## What it does
 
-Glyph Playground is a drawing/design tool for the Nothing Phone 3 Glyph
+Glyph Playground is a drawing/design tool for the Nothing Phone (3) Glyph
 Matrix. Users can:
-- See the Glyph Matrix rendered on-screen as it appears on the physical phone
+- See the **25×25 Glyph Matrix** grid rendered on-screen
 - Toggle individual LEDs on/off by tapping or dragging
 - Save named patterns to local storage
 - Load saved patterns from a library
-- Preview patterns in a fullscreen "Glyph preview" mode
-- (Future) Display patterns on the actual Glyph hardware via the Nothing SDK
+- Display patterns on the **actual Glyph Matrix hardware** via the official
+  Nothing Glyph Matrix SDK (`glyph-matrix-sdk-2.0.aar`)
+
+## Glyph Matrix SDK
+
+The app integrates the official [GlyphMatrix Developer Kit](https://github.com/Nothing-Developer-Programme/GlyphMatrix-Developer-Kit):
+- SDK AAR lives in `app/libs/glyph-matrix-sdk-2.0.aar`
+- Device identifier: `Glyph.DEVICE_23112` (Phone 3)
+- Matrix: 25×25 = 625 individually addressable LEDs
+- Uses `setAppMatrixFrame(int[])` for in-app display
+- Permission: `com.nothing.ketchum.permission.ENABLE`
+- minSdk 33 (required by SDK)
 
 ## What CI does
 
@@ -38,15 +48,17 @@ On every push to `main`, `.github/workflows/ci.yml`:
 
 - `app/` — the application module (`namespace`/`applicationId`
   `com.emberforge.generated.glyphplayground`).
+  - `libs/glyph-matrix-sdk-2.0.aar` — Nothing Glyph Matrix SDK.
   - `src/main/java/com/emberforge/generated/glyphplayground/`
     - `MainActivity.kt` — single Compose Activity with Editor, Library,
       and Preview screens.
-    - `GlyphLayout.kt` — LED position definitions for the Nothing Phone 3
-      Glyph Matrix (camera ring, strips, 3×11 dot matrix, accent LED).
+    - `GlyphLayout.kt` — 25×25 grid constants and index helpers.
     - `GlyphPattern.kt` — `GlyphPattern` data class and
       `PatternRepository` (SharedPreferences-backed storage).
-    - `ui/GlyphMatrixCanvas.kt` — Compose Canvas rendering the phone
-      outline and interactive LED grid, with tap and drag support.
+    - `GlyphController.kt` — wraps `GlyphMatrixManager` from the SDK
+      for displaying patterns on the physical Glyph.
+    - `ui/GlyphMatrixCanvas.kt` — Compose Canvas rendering the 25×25
+      pixel-art style grid with tap and drag support.
   - `src/main/AndroidManifest.xml`, `src/main/res/` — manifest and
     resources.
 - `build.gradle.kts`, `settings.gradle.kts` — Gradle setup (AGP + Kotlin

@@ -8,8 +8,6 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -72,7 +70,6 @@ import com.emberforge.generated.glyphplayground.ui.GlyphMatrixCanvas
 import com.emberforge.generated.glyphplayground.ui.GlyphMatrixPreview
 
 private val NothingBlack = Color(0xFF000000)
-private val NothingDark = Color(0xFF0D0D0D)
 private val NothingCard = Color(0xFF161616)
 private val NothingBorder = Color(0xFF2A2A2A)
 private val NothingWhite = Color(0xFFFFFFFF)
@@ -91,22 +88,31 @@ private val AppColorScheme = darkColorScheme(
 )
 
 class MainActivity : ComponentActivity() {
+
+    private var glyphController: GlyphController? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         val repo = PatternRepository(this)
+        glyphController = GlyphController(this).also { it.init() }
         setContent {
             MaterialTheme(colorScheme = AppColorScheme) {
-                GlyphPlaygroundApp(repo)
+                GlyphPlaygroundApp(repo, glyphController!!)
             }
         }
+    }
+
+    override fun onDestroy() {
+        glyphController?.destroy()
+        super.onDestroy()
     }
 }
 
 private enum class Screen { EDITOR, LIBRARY, PREVIEW }
 
 @Composable
-private fun GlyphPlaygroundApp(repo: PatternRepository) {
+private fun GlyphPlaygroundApp(repo: PatternRepository, glyph: GlyphController) {
     var screen by remember { mutableStateOf(Screen.EDITOR) }
     var activeLeds by remember { mutableStateOf(setOf<Int>()) }
     var patterns by remember { mutableStateOf(repo.loadAll()) }
@@ -125,6 +131,7 @@ private fun GlyphPlaygroundApp(repo: PatternRepository) {
                 onOpenLibrary = { screen = Screen.LIBRARY },
                 onPreview = { screen = Screen.PREVIEW },
                 repo = repo,
+                glyph = glyph,
                 onPatternSaved = refreshPatterns
             )
             Screen.LIBRARY -> LibraryScreen(
@@ -141,7 +148,10 @@ private fun GlyphPlaygroundApp(repo: PatternRepository) {
             )
             Screen.PREVIEW -> PreviewScreen(
                 activeLeds = activeLeds,
-                onClose = { screen = Screen.EDITOR }
+                onClose = {
+                    glyph.clear()
+                    screen = Screen.EDITOR
+                }
             )
         }
     }
@@ -154,6 +164,7 @@ private fun EditorScreen(
     onOpenLibrary: () -> Unit,
     onPreview: () -> Unit,
     repo: PatternRepository,
+    glyph: GlyphController,
     onPatternSaved: () -> Unit
 ) {
     var showSaveDialog by remember { mutableStateOf(false) }
@@ -164,11 +175,10 @@ private fun EditorScreen(
         modifier = Modifier
             .fillMaxSize()
             .padding(top = statusBarPadding.calculateTopPadding())
-            .padding(horizontal = 20.dp)
+            .padding(horizontal = 16.dp)
     ) {
         Spacer(Modifier.height(8.dp))
 
-        // Header
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -192,39 +202,35 @@ private fun EditorScreen(
                     letterSpacing = 6.sp
                 )
             }
-            Row {
-                IconButton(onClick = onOpenLibrary) {
-                    Box(
-                        modifier = Modifier
-                            .size(36.dp)
-                            .clip(CircleShape)
-                            .background(NothingCard),
-                        contentAlignment = Alignment.Center
+            IconButton(onClick = onOpenLibrary) {
+                Box(
+                    modifier = Modifier
+                        .size(36.dp)
+                        .clip(CircleShape)
+                        .background(NothingCard),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        // Grid icon using 4 dots
-                        Column(
-                            verticalArrangement = Arrangement.spacedBy(4.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                Box(Modifier.size(5.dp).clip(RoundedCornerShape(1.dp)).background(NothingWhite))
-                                Box(Modifier.size(5.dp).clip(RoundedCornerShape(1.dp)).background(NothingWhite))
-                            }
-                            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                Box(Modifier.size(5.dp).clip(RoundedCornerShape(1.dp)).background(NothingWhite))
-                                Box(Modifier.size(5.dp).clip(RoundedCornerShape(1.dp)).background(NothingWhite))
-                            }
+                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Box(Modifier.size(5.dp).clip(RoundedCornerShape(1.dp)).background(NothingWhite))
+                            Box(Modifier.size(5.dp).clip(RoundedCornerShape(1.dp)).background(NothingWhite))
+                        }
+                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Box(Modifier.size(5.dp).clip(RoundedCornerShape(1.dp)).background(NothingWhite))
+                            Box(Modifier.size(5.dp).clip(RoundedCornerShape(1.dp)).background(NothingWhite))
                         }
                     }
                 }
             }
         }
 
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(4.dp))
 
-        // LED count indicator
         Text(
-            text = "${activeLeds.size} / ${GlyphLayout.totalLeds} LEDs",
+            text = "${activeLeds.size} / ${GlyphLayout.TOTAL_LEDS} LEDs  •  ${GlyphLayout.GRID_SIZE}×${GlyphLayout.GRID_SIZE}",
             color = NothingDim,
             fontSize = 13.sp,
             fontFamily = FontFamily.Monospace
@@ -232,7 +238,6 @@ private fun EditorScreen(
 
         Spacer(Modifier.height(8.dp))
 
-        // Glyph Matrix Canvas
         GlyphMatrixCanvas(
             activeLeds = activeLeds,
             onToggle = { idx ->
@@ -246,13 +251,12 @@ private fun EditorScreen(
                 )
             },
             modifier = Modifier
-                .weight(1f)
                 .fillMaxWidth()
+                .aspectRatio(1f)
         )
 
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.weight(1f))
 
-        // Action buttons
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -289,6 +293,7 @@ private fun EditorScreen(
             Button(
                 onClick = {
                     if (activeLeds.isNotEmpty()) {
+                        glyph.displayPattern(activeLeds)
                         onPreview()
                     } else {
                         Toast.makeText(context, "Draw something first!", Toast.LENGTH_SHORT).show()
@@ -375,7 +380,7 @@ private fun LibraryScreen(
         modifier = Modifier
             .fillMaxSize()
             .padding(top = statusBarPadding.calculateTopPadding())
-            .padding(horizontal = 20.dp)
+            .padding(horizontal = 16.dp)
     ) {
         Spacer(Modifier.height(8.dp))
 
@@ -416,7 +421,7 @@ private fun LibraryScreen(
                     Text("No saved patterns yet", color = NothingDim, fontSize = 16.sp)
                     Spacer(Modifier.height(8.dp))
                     Text(
-                        "Draw on the Glyph Matrix\nand tap Save",
+                        "Draw on the 25×25 matrix\nand tap Save",
                         color = NothingBorder,
                         fontSize = 13.sp,
                         textAlign = TextAlign.Center
@@ -461,7 +466,7 @@ private fun PatternCard(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .aspectRatio(0.5f)
+                    .aspectRatio(1f)
                     .clip(RoundedCornerShape(8.dp))
                     .background(NothingBlack)
             ) {
@@ -545,10 +550,9 @@ private fun PreviewScreen(activeLeds: Set<Int>, onClose: () -> Unit) {
                 activeLeds = activeLeds,
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(32.dp)
+                    .padding(24.dp)
             )
 
-            // Close button
             IconButton(
                 onClick = onClose,
                 modifier = Modifier
@@ -571,7 +575,6 @@ private fun PreviewScreen(activeLeds: Set<Int>, onClose: () -> Unit) {
                 }
             }
 
-            // Label
             Column(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
@@ -587,7 +590,7 @@ private fun PreviewScreen(activeLeds: Set<Int>, onClose: () -> Unit) {
                 )
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    text = "${activeLeds.size} LEDs active",
+                    text = "${activeLeds.size} / ${GlyphLayout.TOTAL_LEDS} LEDs active",
                     color = NothingBorder,
                     fontSize = 11.sp,
                     fontFamily = FontFamily.Monospace

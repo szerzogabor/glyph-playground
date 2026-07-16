@@ -15,7 +15,7 @@ android {
 
     defaultConfig {
         applicationId = "com.emberforge.generated.glyphplayground"
-        minSdk = 24
+        minSdk = 33
         targetSdk = 35
         versionCode = ciVersionCode
         versionName = ciVersionName
@@ -54,6 +54,7 @@ android {
 }
 
 dependencies {
+    implementation(files("libs/glyph-matrix-sdk-2.0.aar"))
     val composeBom = platform("androidx.compose:compose-bom:2024.10.01")
     implementation(composeBom)
     implementation("androidx.core:core-ktx:1.13.1")
