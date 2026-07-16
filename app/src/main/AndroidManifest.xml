@@ -2,6 +2,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="com.nothing.ketchum.permission.ENABLE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE"/>
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
 
     <application
         android:allowBackup="true"
@@ -40,6 +43,21 @@
             android:name=".widget.GlyphWidgetService"
             android:exported="false"
             android:permission="android.permission.BIND_REMOTEVIEWS" />
+
+        <!--
+            Lights the matrix on a widget tap using the same background-capable
+            setMatrixFrame path as the toy. Runs in its own process so it never
+            touches the app's or the toy's GlyphMatrixManager singleton.
+        -->
+        <service
+            android:name=".widget.GlyphWidgetDisplayService"
+            android:exported="false"
+            android:process=":glyphwidget"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Keeps a glyph frame lit on the Nothing Glyph Matrix while switched on from the widget" />
+        </service>
 
         <!--
             Glyph Toy: the background-capable surface for the Glyph Matrix.
