@@ -10,11 +10,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.input.pointer.pointerInput
 import com.emberforge.generated.glyphplayground.GlyphLayout
 
@@ -29,7 +30,9 @@ private fun hitIndex(offset: Offset, cellSize: Float, gridOffset: Offset): Int? 
     val col = ((offset.x - gridOffset.x) / cellSize).toInt()
     val row = ((offset.y - gridOffset.y) / cellSize).toInt()
     if (col !in 0 until G || row !in 0 until G) return null
-    return row * G + col
+    val idx = row * G + col
+    if (!GlyphLayout.isInsideCircle(idx)) return null
+    return idx
 }
 
 @Composable
@@ -108,46 +111,57 @@ private fun DrawScope.drawGrid(cellSize: Float, gridOffsetY: Float, activeLeds: 
 
 private fun DrawScope.drawGridAt(cellSize: Float, offsetX: Float, offsetY: Float, activeLeds: Set<Int>) {
     val gap = (cellSize * 0.08f).coerceAtLeast(0.5f)
-    val cr = CornerRadius(gap)
+    val gridSide = cellSize * G
+    val radius = gridSide / 2f
+    val centerX = offsetX + radius
+    val centerY = offsetY + radius
 
-    // Grid background
-    drawRoundRect(
-        color = GridBg,
-        topLeft = Offset(offsetX, offsetY),
-        size = Size(cellSize * G, cellSize * G),
-        cornerRadius = CornerRadius(cellSize * 0.2f)
-    )
-
-    // Glow pass for active LEDs
-    for (idx in activeLeds) {
-        val row = idx / G
-        val col = idx % G
-        if (row !in 0 until G || col !in 0 until G) continue
-        val x = offsetX + col * cellSize
-        val y = offsetY + row * cellSize
-        drawRoundRect(
-            color = GlowColor,
-            topLeft = Offset(x - gap, y - gap),
-            size = Size(cellSize + 2 * gap, cellSize + 2 * gap),
-            cornerRadius = CornerRadius(gap * 2)
+    val circlePath = Path().apply {
+        addOval(
+            androidx.compose.ui.geometry.Rect(
+                left = centerX - radius,
+                top = centerY - radius,
+                right = centerX + radius,
+                bottom = centerY + radius
+            )
         )
     }
 
-    // Cell pass
-    for (row in 0 until G) {
-        for (col in 0 until G) {
-            val idx = row * G + col
-            val isOn = idx in activeLeds
-            val x = offsetX + col * cellSize + gap
-            val y = offsetY + row * cellSize + gap
-            val s = cellSize - 2 * gap
+    drawCircle(
+        color = GridBg,
+        radius = radius,
+        center = Offset(centerX, centerY)
+    )
 
-            drawRoundRect(
-                color = if (isOn) LedOn else LedOff,
-                topLeft = Offset(x, y),
-                size = Size(s, s),
-                cornerRadius = cr
+    clipPath(circlePath) {
+        for (idx in activeLeds) {
+            if (!GlyphLayout.isInsideCircle(idx)) continue
+            val row = idx / G
+            val col = idx % G
+            val x = offsetX + col * cellSize
+            val y = offsetY + row * cellSize
+            drawCircle(
+                color = GlowColor,
+                radius = cellSize * 0.8f,
+                center = Offset(x + cellSize / 2f, y + cellSize / 2f)
             )
+        }
+
+        for (row in 0 until G) {
+            for (col in 0 until G) {
+                val idx = row * G + col
+                if (!GlyphLayout.isInsideCircle(idx)) continue
+                val isOn = idx in activeLeds
+                val x = offsetX + col * cellSize + gap
+                val y = offsetY + row * cellSize + gap
+                val s = cellSize - 2 * gap
+
+                drawCircle(
+                    color = if (isOn) LedOn else LedOff,
+                    radius = s / 2f,
+                    center = Offset(x + s / 2f, y + s / 2f)
+                )
+            }
         }
     }
 }

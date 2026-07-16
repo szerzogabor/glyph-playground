@@ -220,7 +220,7 @@ private fun EditorScreen(
         Spacer(Modifier.height(4.dp))
 
         Text(
-            text = "${activeLeds.size} / ${GlyphLayout.TOTAL_LEDS} LEDs  •  ${GlyphLayout.GRID_SIZE}×${GlyphLayout.GRID_SIZE}",
+            text = "${activeLeds.size} / ${GlyphLayout.VALID_LED_COUNT} LEDs",
             color = NothingDim,
             fontSize = 13.sp,
             fontFamily = FontFamily.Monospace
@@ -422,7 +422,7 @@ private fun LibraryScreen(
                     Text("No saved patterns yet", color = NothingDim, fontSize = 16.sp)
                     Spacer(Modifier.height(8.dp))
                     Text(
-                        "Draw on the 25×25 matrix\nand tap Save",
+                        "Draw on the Glyph Matrix\nand tap Save",
                         color = NothingBorder,
                         fontSize = 13.sp,
                         textAlign = TextAlign.Center
