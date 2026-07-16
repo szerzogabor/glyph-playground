@@ -5,9 +5,6 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -34,7 +31,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -75,6 +71,8 @@ private val NothingBorder = Color(0xFF2A2A2A)
 private val NothingWhite = Color(0xFFFFFFFF)
 private val NothingDim = Color(0xFF777777)
 private val NothingAccent = Color(0xFFD0FD3E)
+private val NothingGreen = Color(0xFF00D563)
+private val NothingRed = Color(0xFFFF4444)
 
 private val AppColorScheme = darkColorScheme(
     primary = NothingWhite,
@@ -109,7 +107,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-private enum class Screen { EDITOR, LIBRARY, PREVIEW }
+private enum class Screen { EDITOR, LIBRARY }
 
 @Composable
 private fun GlyphPlaygroundApp(repo: PatternRepository, glyph: GlyphController) {
@@ -129,7 +127,6 @@ private fun GlyphPlaygroundApp(repo: PatternRepository, glyph: GlyphController) 
                 activeLeds = activeLeds,
                 onLedsChanged = { activeLeds = it },
                 onOpenLibrary = { screen = Screen.LIBRARY },
-                onPreview = { screen = Screen.PREVIEW },
                 repo = repo,
                 glyph = glyph,
                 onPatternSaved = refreshPatterns
@@ -146,13 +143,6 @@ private fun GlyphPlaygroundApp(repo: PatternRepository, glyph: GlyphController) 
                     refreshPatterns()
                 }
             )
-            Screen.PREVIEW -> PreviewScreen(
-                activeLeds = activeLeds,
-                onClose = {
-                    glyph.clear()
-                    screen = Screen.EDITOR
-                }
-            )
         }
     }
 }
@@ -162,12 +152,12 @@ private fun EditorScreen(
     activeLeds: Set<Int>,
     onLedsChanged: (Set<Int>) -> Unit,
     onOpenLibrary: () -> Unit,
-    onPreview: () -> Unit,
     repo: PatternRepository,
     glyph: GlyphController,
     onPatternSaved: () -> Unit
 ) {
     var showSaveDialog by remember { mutableStateOf(false) }
+    var glyphOn by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val statusBarPadding = WindowInsets.statusBars.asPaddingValues()
 
@@ -292,22 +282,33 @@ private fun EditorScreen(
 
             Button(
                 onClick = {
-                    if (activeLeds.isNotEmpty()) {
-                        glyph.displayPattern(activeLeds)
-                        onPreview()
+                    if (glyphOn) {
+                        // Glyph is on → turn it off.
+                        glyph.clear()
+                        glyphOn = false
                     } else {
-                        Toast.makeText(context, "Draw something first!", Toast.LENGTH_SHORT).show()
+                        // Glyph is off → turn it on (no preview screen).
+                        if (activeLeds.isNotEmpty()) {
+                            glyph.displayPattern(activeLeds)
+                            glyphOn = true
+                        } else {
+                            Toast.makeText(context, "Draw something first!", Toast.LENGTH_SHORT).show()
+                        }
                     }
                 },
                 modifier = Modifier.weight(1f),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = NothingAccent,
+                    containerColor = if (glyphOn) NothingRed else NothingGreen,
                     contentColor = NothingBlack
                 ),
                 contentPadding = PaddingValues(vertical = 14.dp)
             ) {
-                Text("Glyph", fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                Text(
+                    text = if (glyphOn) "Glyph Off" else "Glyph",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
             }
         }
     }
@@ -522,7 +523,7 @@ private fun PatternCard(
             text = { Text("\"${pattern.name}\" will be permanently deleted.", color = NothingDim) },
             confirmButton = {
                 TextButton(onClick = { showDeleteConfirm = false; onDelete() }) {
-                    Text("Delete", color = Color(0xFFFF4444))
+                    Text("Delete", color = NothingRed)
                 }
             },
             dismissButton = {
@@ -531,71 +532,5 @@ private fun PatternCard(
                 }
             }
         )
-    }
-}
-
-@Composable
-private fun PreviewScreen(activeLeds: Set<Int>, onClose: () -> Unit) {
-    AnimatedVisibility(
-        visible = true,
-        enter = fadeIn(),
-        exit = fadeOut()
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(NothingBlack)
-        ) {
-            GlyphMatrixPreview(
-                activeLeds = activeLeds,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(24.dp)
-            )
-
-            IconButton(
-                onClick = onClose,
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(top = 48.dp, end = 16.dp)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(CircleShape)
-                        .background(Color(0x33FFFFFF)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        Icons.Default.Close,
-                        contentDescription = "Close preview",
-                        tint = NothingWhite,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-            }
-
-            Column(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 48.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = "GLYPH PREVIEW",
-                    color = NothingDim,
-                    fontSize = 12.sp,
-                    letterSpacing = 4.sp,
-                    fontFamily = FontFamily.Monospace
-                )
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    text = "${activeLeds.size} / ${GlyphLayout.VALID_LED_COUNT} LEDs active",
-                    color = NothingBorder,
-                    fontSize = 11.sp,
-                    fontFamily = FontFamily.Monospace
-                )
-            }
-        }
     }
 }
