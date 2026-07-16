@@ -48,7 +48,8 @@
         -->
         <service
             android:name=".widget.GlyphToyService"
-            android:exported="true">
+            android:exported="true"
+            android:process=":glyphtoy">
             <intent-filter>
                 <action android:name="com.nothing.glyph.TOY" />
             </intent-filter>
