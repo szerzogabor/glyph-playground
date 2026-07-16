@@ -7,6 +7,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,6 +27,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -268,6 +270,10 @@ private fun EditorScreen(
                 .aspectRatio(1f)
         )
 
+        Spacer(Modifier.height(12.dp))
+
+        PresetRow(onSelect = onLedsChanged)
+
         Spacer(Modifier.weight(1f))
 
         if (editingPattern != null) {
@@ -385,6 +391,68 @@ private fun EditorScreen(
                 showSaveDialog = false
                 Toast.makeText(context, "Pattern saved!", Toast.LENGTH_SHORT).show()
             }
+        )
+    }
+}
+
+@Composable
+private fun PresetRow(onSelect: (Set<Int>) -> Unit) {
+    Column {
+        Text(
+            text = "PRESETS",
+            color = NothingDim,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Medium,
+            fontFamily = FontFamily.SansSerif,
+            letterSpacing = 3.sp
+        )
+
+        Spacer(Modifier.height(8.dp))
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            PredefinedGlyphs.ALL.forEach { glyph ->
+                PresetChip(glyph = glyph, onClick = { onSelect(glyph.activeLeds) })
+            }
+        }
+    }
+}
+
+@Composable
+private fun PresetChip(glyph: PredefinedGlyph, onClick: () -> Unit) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .width(72.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .clickable(onClick = onClick)
+            .background(NothingCard)
+            .padding(8.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(48.dp)
+                .clip(CircleShape)
+                .background(NothingBlack),
+            contentAlignment = Alignment.Center
+        ) {
+            GlyphMatrixPreview(
+                activeLeds = glyph.activeLeds,
+                modifier = Modifier.fillMaxSize().padding(2.dp)
+            )
+        }
+        Spacer(Modifier.height(6.dp))
+        Text(
+            text = glyph.name,
+            color = NothingWhite,
+            fontSize = 10.sp,
+            fontWeight = FontWeight.Medium,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
         )
     }
 }
