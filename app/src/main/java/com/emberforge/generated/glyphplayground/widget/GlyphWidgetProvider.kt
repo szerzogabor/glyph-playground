@@ -6,16 +6,19 @@ import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.view.View
+import android.net.Uri
 import android.widget.RemoteViews
 import com.emberforge.generated.glyphplayground.PatternRepository
 import com.emberforge.generated.glyphplayground.R
 
 /**
- * Home-screen widget that shows a single saved glyph and nothing else. Tapping
- * the glyph toggles it on the physical Glyph Matrix; tapping again clears it.
- * Which glyph a widget shows is chosen in [GlyphWidgetConfigActivity] (on
- * placement, or later via the launcher's "reconfigure" action).
+ * Home-screen widget that shows the saved glyphs assigned to it — the glyphs
+ * only, with no title, labels, or buttons. The list scrolls when more than one
+ * glyph is shown (a scroll marker appears while scrolling), and tapping a glyph
+ * lights it on the physical Glyph Matrix. The lit glyph is marked with an
+ * accent glow/ring — the sole active-state cue. Which glyphs a widget shows is
+ * chosen in [GlyphWidgetConfigActivity] (on placement, or later via the
+ * launcher's "reconfigure" action).
  */
 class GlyphWidgetProvider : AppWidgetProvider() {
 
@@ -24,7 +27,7 @@ class GlyphWidgetProvider : AppWidgetProvider() {
     }
 
     override fun onDeleted(context: Context, appWidgetIds: IntArray) {
-        for (id in appWidgetIds) WidgetPrefs.clearGlyph(context, id)
+        for (id in appWidgetIds) WidgetPrefs.clearSelected(context, id)
     }
 
     override fun onReceive(context: Context, intent: Intent) {
@@ -36,12 +39,12 @@ class GlyphWidgetProvider : AppWidgetProvider() {
     }
 
     /**
-     * Toggles the widget's glyph on the physical Glyph Matrix. Tapping the
-     * active glyph clears it; tapping when off switches to it. Display goes
-     * through [GlyphWidgetDisplayService], which uses the same
-     * background-capable `setMatrixFrame` path the Glyph Toy uses. The
-     * selection is also stored so the "Glyph Playground" toy shows the same
-     * glyph when triggered by the Glyph button.
+     * Toggles the tapped glyph on the physical Glyph Matrix. Tapping the active
+     * glyph clears it; tapping another switches to it. Display goes through
+     * [GlyphWidgetDisplayService], which uses the same background-capable
+     * `setMatrixFrame` path the Glyph Toy uses. The selection is also stored so
+     * the "Glyph Playground" toy shows the same glyph when triggered by the
+     * Glyph button.
      */
     private fun handleToggle(context: Context, glyphId: String) {
         val pattern = PatternRepository(context).loadAll().find { it.id == glyphId } ?: return
@@ -52,77 +55,62 @@ class GlyphWidgetProvider : AppWidgetProvider() {
             WidgetPrefs.setActiveGlyphId(context, glyphId)
             GlyphWidgetDisplayService.show(context, pattern.activeLeds)
         }
+        refreshAll(context)
     }
 
     companion object {
         const val ACTION_TOGGLE = "com.emberforge.generated.glyphplayground.widget.TOGGLE"
         const val EXTRA_GLYPH_ID = "glyph_id"
 
-        private const val BITMAP_PX = 216
-
-        /** Rebuilds a single widget instance to show its assigned glyph. */
+        /** Rebuilds a single widget instance and refreshes its list contents. */
         fun renderWidget(context: Context, manager: AppWidgetManager, appWidgetId: Int) {
             val views = RemoteViews(context.packageName, R.layout.widget_glyph)
 
-            val glyphId = WidgetPrefs.getGlyph(context, appWidgetId)
-            val pattern = glyphId?.let { id ->
-                PatternRepository(context).loadAll().find { it.id == id }
+            val adapterIntent = Intent(context, GlyphWidgetService::class.java).apply {
+                putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+                data = Uri.parse(toUri(Intent.URI_INTENT_SCHEME))
             }
+            views.setRemoteAdapter(R.id.widget_list, adapterIntent)
+            views.setEmptyView(R.id.widget_list, R.id.widget_empty)
 
-            if (pattern == null) {
-                // No glyph assigned (or it was deleted): prompt to pick one.
-                views.setViewVisibility(R.id.widget_glyph, View.GONE)
-                views.setViewVisibility(R.id.widget_empty, View.VISIBLE)
-                views.setOnClickPendingIntent(R.id.widget_root, configPendingIntent(context, appWidgetId))
-            } else {
-                views.setViewVisibility(R.id.widget_empty, View.GONE)
-                views.setViewVisibility(R.id.widget_glyph, View.VISIBLE)
-                views.setImageViewBitmap(
-                    R.id.widget_glyph,
-                    GlyphBitmapRenderer.render(pattern.activeLeds, BITMAP_PX)
-                )
-                views.setOnClickPendingIntent(R.id.widget_root, togglePendingIntent(context, appWidgetId, pattern.id))
+            // Template intent: item fill-in intents add the glyph id.
+            val toggleTemplate = Intent(context, GlyphWidgetProvider::class.java).apply {
+                action = ACTION_TOGGLE
             }
+            val togglePending = PendingIntent.getBroadcast(
+                context,
+                appWidgetId,
+                toggleTemplate,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
+            )
+            views.setPendingIntentTemplate(R.id.widget_list, togglePending)
+
+            // Empty state opens configuration to pick glyphs.
+            val configPending = PendingIntent.getActivity(
+                context,
+                appWidgetId,
+                Intent(context, GlyphWidgetConfigActivity::class.java).apply {
+                    putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                    data = Uri.parse("glyph://config/$appWidgetId")
+                },
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            views.setOnClickPendingIntent(R.id.widget_empty, configPending)
 
             manager.updateAppWidget(appWidgetId, views)
+            manager.notifyAppWidgetViewDataChanged(appWidgetId, R.id.widget_list)
         }
 
-        /** Re-renders every placed widget (e.g. after a glyph is edited or deleted). */
+        /** Refreshes the glyph list of every placed widget (e.g. after a toggle or edit). */
         fun refreshAll(context: Context) {
             val manager = AppWidgetManager.getInstance(context)
             val ids = manager.getAppWidgetIds(
                 ComponentName(context, GlyphWidgetProvider::class.java)
             )
-            for (id in ids) renderWidget(context, manager, id)
-        }
-
-        private fun togglePendingIntent(context: Context, appWidgetId: Int, glyphId: String): PendingIntent {
-            val intent = Intent(context, GlyphWidgetProvider::class.java).apply {
-                action = ACTION_TOGGLE
-                putExtra(EXTRA_GLYPH_ID, glyphId)
-                // Unique data so each widget keeps its own extras.
-                data = android.net.Uri.parse("glyph://toggle/$appWidgetId")
+            if (ids.isNotEmpty()) {
+                manager.notifyAppWidgetViewDataChanged(ids, R.id.widget_list)
             }
-            return PendingIntent.getBroadcast(
-                context,
-                appWidgetId,
-                intent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            )
-        }
-
-        private fun configPendingIntent(context: Context, appWidgetId: Int): PendingIntent {
-            val intent = Intent(context, GlyphWidgetConfigActivity::class.java).apply {
-                putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                data = android.net.Uri.parse("glyph://config/$appWidgetId")
-            }
-            return PendingIntent.getActivity(
-                context,
-                appWidgetId,
-                intent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            )
         }
     }
 }

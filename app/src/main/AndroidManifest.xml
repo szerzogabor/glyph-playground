@@ -39,6 +39,11 @@
                 android:resource="@xml/glyph_widget_info" />
         </receiver>
 
+        <service
+            android:name=".widget.GlyphWidgetService"
+            android:exported="false"
+            android:permission="android.permission.BIND_REMOTEVIEWS" />
+
         <!--
             Lights the matrix on a widget tap using the same background-capable
             setMatrixFrame path as the toy. Runs in its own process so it never
