@@ -15,13 +15,19 @@ Matrix. Users can:
 
 ## Glyph Matrix SDK
 
-The app integrates the official [GlyphMatrix Developer Kit](https://github.com/Nothing-Developer-Programme/GlyphMatrix-Developer-Kit):
+**Official SDK:** https://github.com/Nothing-Developer-Programme/GlyphMatrix-Developer-Kit
+
+The app integrates the official GlyphMatrix Developer Kit:
 - SDK AAR lives in `app/libs/glyph-matrix-sdk-2.0.aar`
 - Device identifier: `Glyph.DEVICE_23112` (Phone 3)
-- Matrix: 25×25 = 625 individually addressable LEDs
+- Matrix: 25×25 grid, physically **round** — LEDs are arranged in a
+  circular disc; corner cells outside the circle have no physical LED
 - Uses `setAppMatrixFrame(int[])` for in-app display
 - Permission: `com.nothing.ketchum.permission.ENABLE`
 - minSdk 33 (required by SDK)
+- The UI canvas clips to a circle and uses round LED dots to match the
+  physical Glyph Matrix shape. `GlyphLayout.VALID_INDICES` holds the set
+  of indices that fall inside the circular boundary.
 
 ## What CI does
 
