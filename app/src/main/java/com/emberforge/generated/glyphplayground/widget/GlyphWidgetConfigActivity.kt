@@ -30,10 +30,10 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
@@ -74,9 +74,9 @@ private val ConfigColorScheme = darkColorScheme(
 )
 
 /**
- * Lets the user choose which saved glyphs a widget instance shows. Launched
- * automatically when the widget is placed, and again from the widget's header
- * button. Selecting nothing means "show every saved glyph".
+ * Lets the user choose the single saved glyph a widget instance shows. Launched
+ * automatically when the widget is placed, and again via the launcher's
+ * "reconfigure" action.
  */
 class GlyphWidgetConfigActivity : ComponentActivity() {
 
@@ -98,7 +98,7 @@ class GlyphWidgetConfigActivity : ComponentActivity() {
 
         val repo = PatternRepository(this)
         val patterns = repo.loadAll()
-        val initial = WidgetPrefs.getSelected(this, appWidgetId) ?: patterns.map { it.id }.toSet()
+        val initial = WidgetPrefs.getGlyph(this, appWidgetId) ?: patterns.firstOrNull()?.id
 
         setContent {
             MaterialTheme(colorScheme = ConfigColorScheme) {
@@ -106,8 +106,8 @@ class GlyphWidgetConfigActivity : ComponentActivity() {
                     patterns = patterns,
                     initiallySelected = initial,
                     onCancel = { finish() },
-                    onConfirm = { selectedIds ->
-                        WidgetPrefs.setSelected(this, appWidgetId, selectedIds)
+                    onConfirm = { selectedId ->
+                        WidgetPrefs.setGlyph(this, appWidgetId, selectedId)
                         GlyphWidgetProvider.renderWidget(
                             this,
                             AppWidgetManager.getInstance(this),
@@ -128,9 +128,9 @@ class GlyphWidgetConfigActivity : ComponentActivity() {
 @Composable
 private fun ConfigScreen(
     patterns: List<GlyphPattern>,
-    initiallySelected: Set<String>,
+    initiallySelected: String?,
     onCancel: () -> Unit,
-    onConfirm: (Set<String>) -> Unit
+    onConfirm: (String) -> Unit
 ) {
     var selected by remember { mutableStateOf(initiallySelected) }
     val topPadding = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
@@ -152,7 +152,7 @@ private fun ConfigScreen(
             letterSpacing = 3.sp
         )
         Text(
-            text = "Choose the glyphs to show",
+            text = "Choose the glyph to show",
             color = NothingDim,
             fontSize = 13.sp,
             fontFamily = FontFamily.SansSerif,
@@ -177,13 +177,10 @@ private fun ConfigScreen(
                 contentPadding = PaddingValues(vertical = 4.dp)
             ) {
                 items(patterns, key = { it.id }) { pattern ->
-                    val checked = pattern.id in selected
                     ConfigRow(
                         pattern = pattern,
-                        checked = checked,
-                        onToggle = {
-                            selected = if (checked) selected - pattern.id else selected + pattern.id
-                        }
+                        checked = pattern.id == selected,
+                        onSelect = { selected = pattern.id }
                     )
                 }
             }
@@ -205,14 +202,14 @@ private fun ConfigScreen(
                 Text("Cancel", fontSize = 14.sp)
             }
             Button(
-                onClick = { onConfirm(selected) },
+                onClick = { selected?.let(onConfirm) },
                 modifier = Modifier.weight(1f),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = NothingAccent,
                     contentColor = NothingBlack
                 ),
-                enabled = patterns.isNotEmpty(),
+                enabled = selected != null,
                 contentPadding = PaddingValues(vertical = 14.dp)
             ) {
                 Text("Add widget", fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
@@ -225,12 +222,12 @@ private fun ConfigScreen(
 private fun ConfigRow(
     pattern: GlyphPattern,
     checked: Boolean,
-    onToggle: () -> Unit
+    onSelect: () -> Unit
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onToggle),
+            .clickable(onClick = onSelect),
         colors = CardDefaults.cardColors(containerColor = NothingCard),
         shape = RoundedCornerShape(14.dp)
     ) {
@@ -268,13 +265,12 @@ private fun ConfigRow(
                     fontFamily = FontFamily.Monospace
                 )
             }
-            Checkbox(
-                checked = checked,
-                onCheckedChange = { onToggle() },
-                colors = CheckboxDefaults.colors(
-                    checkedColor = NothingAccent,
-                    uncheckedColor = NothingBorder,
-                    checkmarkColor = NothingBlack
+            RadioButton(
+                selected = checked,
+                onClick = onSelect,
+                colors = RadioButtonDefaults.colors(
+                    selectedColor = NothingAccent,
+                    unselectedColor = NothingBorder
                 )
             )
         }
