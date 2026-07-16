@@ -11,4 +11,5 @@
     android:previewLayout="@layout/widget_glyph"
     android:configure="com.emberforge.generated.glyphplayground.widget.GlyphWidgetConfigActivity"
     android:resizeMode="horizontal|vertical"
+    android:widgetFeatures="reconfigurable"
     android:widgetCategory="home_screen" />
