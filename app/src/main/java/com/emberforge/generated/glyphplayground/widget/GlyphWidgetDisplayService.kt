@@ -9,6 +9,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.IBinder
 import android.util.Log
+import com.emberforge.generated.glyphplayground.GlyphController
 import com.emberforge.generated.glyphplayground.GlyphLayout
 import com.emberforge.generated.glyphplayground.R
 import com.nothing.ketchum.Glyph
@@ -60,10 +61,13 @@ class GlyphWidgetDisplayService : Service() {
         }
     }
 
+    private var pendingBrightness: Int = GlyphController.MAX_BRIGHTNESS
+
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             ACTION_SHOW -> {
                 pendingLeds = intent.getIntArrayExtra(EXTRA_LEDS)?.toSet() ?: emptySet()
+                pendingBrightness = intent.getIntExtra(EXTRA_BRIGHTNESS, GlyphController.MAX_BRIGHTNESS)
                 pendingClear = false
             }
             ACTION_HIDE -> {
@@ -86,7 +90,8 @@ class GlyphWidgetDisplayService : Service() {
                 }
                 pendingLeds != null -> {
                     val leds = pendingLeds!!
-                    val colors = IntArray(GlyphLayout.TOTAL_LEDS) { if (it in leds) MAX_BRIGHTNESS else 0 }
+                    val b = pendingBrightness.coerceIn(0, GlyphController.MAX_BRIGHTNESS)
+                    val colors = IntArray(GlyphLayout.TOTAL_LEDS) { if (it in leds) b else 0 }
                     mgr.setMatrixFrame(colors)
                     pendingLeds = null
                 }
@@ -133,18 +138,19 @@ class GlyphWidgetDisplayService : Service() {
 
     companion object {
         private const val TAG = "GlyphWidgetDisplay"
-        private const val MAX_BRIGHTNESS = 255
         private const val NOTIF_ID = 43
         private const val CHANNEL_ID = "glyph_widget_display"
 
         private const val ACTION_SHOW = "com.emberforge.generated.glyphplayground.widget.SHOW"
         private const val ACTION_HIDE = "com.emberforge.generated.glyphplayground.widget.HIDE"
         private const val EXTRA_LEDS = "leds"
+        private const val EXTRA_BRIGHTNESS = "brightness"
 
-        fun show(context: Context, leds: Set<Int>) {
+        fun show(context: Context, leds: Set<Int>, brightness: Int = GlyphController.MAX_BRIGHTNESS) {
             val intent = Intent(context, GlyphWidgetDisplayService::class.java).apply {
                 action = ACTION_SHOW
                 putExtra(EXTRA_LEDS, leds.toIntArray())
+                putExtra(EXTRA_BRIGHTNESS, brightness)
             }
             context.startForegroundService(intent)
         }

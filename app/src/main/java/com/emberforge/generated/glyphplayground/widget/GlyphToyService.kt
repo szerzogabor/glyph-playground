@@ -9,6 +9,7 @@ import android.os.Looper
 import android.os.Message
 import android.os.Messenger
 import android.util.Log
+import com.emberforge.generated.glyphplayground.GlyphController
 import com.emberforge.generated.glyphplayground.GlyphLayout
 import com.emberforge.generated.glyphplayground.GlyphPattern
 import com.emberforge.generated.glyphplayground.PatternRepository
@@ -115,9 +116,10 @@ class GlyphToyService : Service() {
     private fun renderCurrent() {
         val mgr = gm ?: return
         if (!connected) return
-        val leds = glyphs.getOrNull(index)?.activeLeds ?: emptySet()
+        val pattern = glyphs.getOrNull(index) ?: return
         try {
-            val colors = IntArray(GlyphLayout.TOTAL_LEDS) { if (it in leds) MAX_BRIGHTNESS else 0 }
+            val b = pattern.brightness.coerceIn(0, GlyphController.MAX_BRIGHTNESS)
+            val colors = IntArray(GlyphLayout.TOTAL_LEDS) { if (it in pattern.activeLeds) b else 0 }
             mgr.setMatrixFrame(colors)
         } catch (e: Exception) {
             Log.e(TAG, "Failed to render glyph", e)
@@ -134,6 +136,5 @@ class GlyphToyService : Service() {
 
     companion object {
         private const val TAG = "GlyphToyService"
-        private const val MAX_BRIGHTNESS = 255
     }
 }

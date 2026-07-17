@@ -9,6 +9,7 @@ data class GlyphPattern(
     val id: String = UUID.randomUUID().toString(),
     val name: String,
     val activeLeds: Set<Int>,
+    val brightness: Int = GlyphController.MAX_BRIGHTNESS,
     val createdAt: Long = System.currentTimeMillis()
 )
 
@@ -21,6 +22,7 @@ class PatternRepository(context: Context) {
             put("id", pattern.id)
             put("name", pattern.name)
             put("leds", JSONArray(pattern.activeLeds.toList()))
+            put("brightness", pattern.brightness)
             put("createdAt", pattern.createdAt)
         }
         val ids = allIds().toMutableSet().apply { add(pattern.id) }
@@ -46,7 +48,8 @@ class PatternRepository(context: Context) {
         val leds = mutableSetOf<Int>()
         val arr = obj.getJSONArray("leds")
         for (i in 0 until arr.length()) leds.add(arr.getInt(i))
-        GlyphPattern(obj.getString("id"), obj.getString("name"), leds, obj.getLong("createdAt"))
+        val brightness = obj.optInt("brightness", GlyphController.MAX_BRIGHTNESS)
+        GlyphPattern(obj.getString("id"), obj.getString("name"), leds, brightness, obj.getLong("createdAt"))
     } catch (_: Exception) {
         null
     }

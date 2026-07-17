@@ -46,6 +46,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.darkColorScheme
@@ -68,6 +70,7 @@ import androidx.compose.ui.unit.sp
 import com.emberforge.generated.glyphplayground.ui.GlyphMatrixCanvas
 import com.emberforge.generated.glyphplayground.ui.GlyphMatrixPreview
 import com.emberforge.generated.glyphplayground.widget.GlyphWidgetProvider
+import kotlin.math.roundToInt
 
 private val NothingBlack = Color(0xFF000000)
 private val NothingCard = Color(0xFF161616)
@@ -117,6 +120,7 @@ private enum class Screen { EDITOR, LIBRARY }
 private fun GlyphPlaygroundApp(repo: PatternRepository, glyph: GlyphController) {
     var screen by remember { mutableStateOf(Screen.EDITOR) }
     var activeLeds by remember { mutableStateOf(setOf<Int>()) }
+    var brightness by remember { mutableStateOf(GlyphController.MAX_BRIGHTNESS) }
     var patterns by remember { mutableStateOf(repo.loadAll()) }
     var editingPattern by remember { mutableStateOf<GlyphPattern?>(null) }
 
@@ -136,6 +140,8 @@ private fun GlyphPlaygroundApp(repo: PatternRepository, glyph: GlyphController) 
             Screen.EDITOR -> EditorScreen(
                 activeLeds = activeLeds,
                 onLedsChanged = { activeLeds = it },
+                brightness = brightness,
+                onBrightnessChanged = { brightness = it },
                 onOpenLibrary = { screen = Screen.LIBRARY },
                 repo = repo,
                 glyph = glyph,
@@ -151,11 +157,13 @@ private fun GlyphPlaygroundApp(repo: PatternRepository, glyph: GlyphController) 
                 onBack = { screen = Screen.EDITOR },
                 onSelect = { pattern ->
                     activeLeds = pattern.activeLeds
+                    brightness = pattern.brightness
                     editingPattern = null
                     screen = Screen.EDITOR
                 },
                 onModify = { pattern ->
                     activeLeds = pattern.activeLeds
+                    brightness = pattern.brightness
                     editingPattern = pattern
                     screen = Screen.EDITOR
                 },
@@ -172,6 +180,8 @@ private fun GlyphPlaygroundApp(repo: PatternRepository, glyph: GlyphController) 
 private fun EditorScreen(
     activeLeds: Set<Int>,
     onLedsChanged: (Set<Int>) -> Unit,
+    brightness: Int,
+    onBrightnessChanged: (Int) -> Unit,
     onOpenLibrary: () -> Unit,
     repo: PatternRepository,
     glyph: GlyphController,
@@ -274,6 +284,10 @@ private fun EditorScreen(
 
         PresetRow(onSelect = onLedsChanged)
 
+        Spacer(Modifier.height(16.dp))
+
+        BrightnessSlider(brightness = brightness, onBrightnessChanged = onBrightnessChanged)
+
         Spacer(Modifier.weight(1f))
 
         if (editingPattern != null) {
@@ -298,7 +312,7 @@ private fun EditorScreen(
 
                 Button(
                     onClick = {
-                        repo.save(editingPattern.copy(activeLeds = activeLeds))
+                        repo.save(editingPattern.copy(activeLeds = activeLeds, brightness = brightness))
                         onPatternSaved()
                         Toast.makeText(context, "Pattern updated!", Toast.LENGTH_SHORT).show()
                     },
@@ -358,7 +372,7 @@ private fun EditorScreen(
                         glyphOn = false
                     } else {
                         if (activeLeds.isNotEmpty()) {
-                            glyph.displayPattern(activeLeds)
+                            glyph.displayPattern(activeLeds, brightness)
                             glyphOn = true
                         } else {
                             Toast.makeText(context, "Draw something first!", Toast.LENGTH_SHORT).show()
@@ -386,7 +400,7 @@ private fun EditorScreen(
         SaveDialog(
             onDismiss = { showSaveDialog = false },
             onSave = { name ->
-                repo.save(GlyphPattern(name = name, activeLeds = activeLeds))
+                repo.save(GlyphPattern(name = name, activeLeds = activeLeds, brightness = brightness))
                 onPatternSaved()
                 showSaveDialog = false
                 Toast.makeText(context, "Pattern saved!", Toast.LENGTH_SHORT).show()
@@ -419,6 +433,44 @@ private fun PresetRow(onSelect: (Set<Int>) -> Unit) {
                 PresetChip(glyph = glyph, onClick = { onSelect(glyph.activeLeds) })
             }
         }
+    }
+}
+
+@Composable
+private fun BrightnessSlider(brightness: Int, onBrightnessChanged: (Int) -> Unit) {
+    Column {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "BRIGHTNESS",
+                color = NothingDim,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Medium,
+                fontFamily = FontFamily.SansSerif,
+                letterSpacing = 3.sp
+            )
+            Text(
+                text = "${(brightness * 100f / GlyphController.MAX_BRIGHTNESS).roundToInt()}%",
+                color = NothingWhite,
+                fontSize = 12.sp,
+                fontFamily = FontFamily.Monospace
+            )
+        }
+
+        Slider(
+            value = brightness.toFloat(),
+            onValueChange = { onBrightnessChanged(it.roundToInt()) },
+            valueRange = 0f..GlyphController.MAX_BRIGHTNESS.toFloat(),
+            colors = SliderDefaults.colors(
+                thumbColor = NothingWhite,
+                activeTrackColor = NothingWhite,
+                inactiveTrackColor = NothingBorder
+            ),
+            modifier = Modifier.fillMaxWidth()
+        )
     }
 }
 

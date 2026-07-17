@@ -38,10 +38,11 @@ class GlyphController(context: Context) {
 
     val isAvailable get() = connected
 
-    fun displayPattern(activeLeds: Set<Int>) {
+    fun displayPattern(activeLeds: Set<Int>, brightness: Int = MAX_BRIGHTNESS) {
         if (!connected) return
         try {
-            val colors = IntArray(GlyphLayout.TOTAL_LEDS) { if (it in activeLeds) MAX_BRIGHTNESS else 0 }
+            val b = brightness.coerceIn(0, MAX_BRIGHTNESS)
+            val colors = IntArray(GlyphLayout.TOTAL_LEDS) { if (it in activeLeds) b else 0 }
             manager?.setAppMatrixFrame(colors)
         } catch (e: Exception) {
             Log.e(TAG, "Failed to display pattern", e)
@@ -68,6 +69,6 @@ class GlyphController(context: Context) {
 
     companion object {
         private const val TAG = "GlyphController"
-        private const val MAX_BRIGHTNESS = 255
+        const val MAX_BRIGHTNESS = 4095
     }
 }
