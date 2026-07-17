@@ -68,6 +68,6 @@ class GlyphController(context: Context) {
 
     companion object {
         private const val TAG = "GlyphController"
-        private const val MAX_BRIGHTNESS = 255
+        const val MAX_BRIGHTNESS = 4095
     }
 }

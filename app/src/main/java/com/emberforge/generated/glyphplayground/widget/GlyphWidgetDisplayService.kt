@@ -9,6 +9,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.IBinder
 import android.util.Log
+import com.emberforge.generated.glyphplayground.GlyphController
 import com.emberforge.generated.glyphplayground.GlyphLayout
 import com.emberforge.generated.glyphplayground.R
 import com.nothing.ketchum.Glyph
@@ -86,7 +87,7 @@ class GlyphWidgetDisplayService : Service() {
                 }
                 pendingLeds != null -> {
                     val leds = pendingLeds!!
-                    val colors = IntArray(GlyphLayout.TOTAL_LEDS) { if (it in leds) MAX_BRIGHTNESS else 0 }
+                    val colors = IntArray(GlyphLayout.TOTAL_LEDS) { if (it in leds) GlyphController.MAX_BRIGHTNESS else 0 }
                     mgr.setMatrixFrame(colors)
                     pendingLeds = null
                 }
@@ -133,7 +134,6 @@ class GlyphWidgetDisplayService : Service() {
 
     companion object {
         private const val TAG = "GlyphWidgetDisplay"
-        private const val MAX_BRIGHTNESS = 255
         private const val NOTIF_ID = 43
         private const val CHANNEL_ID = "glyph_widget_display"
 
