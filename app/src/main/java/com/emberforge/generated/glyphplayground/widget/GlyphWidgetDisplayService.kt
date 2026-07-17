@@ -87,8 +87,7 @@ class GlyphWidgetDisplayService : Service() {
                 }
                 pendingLeds != null -> {
                     val leds = pendingLeds!!
-                    val b = GlyphController.getSystemGlyphBrightness(this)
-                    val colors = IntArray(GlyphLayout.TOTAL_LEDS) { if (it in leds) b else 0 }
+                    val colors = IntArray(GlyphLayout.TOTAL_LEDS) { if (it in leds) GlyphController.MAX_BRIGHTNESS else 0 }
                     mgr.setMatrixFrame(colors)
                     pendingLeds = null
                 }
