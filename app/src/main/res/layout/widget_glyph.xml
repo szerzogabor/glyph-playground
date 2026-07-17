@@ -4,19 +4,47 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/widget_background"
-    android:padding="8dp">
+    android:padding="6dp">
 
     <!--
-        StackView shows exactly one glyph at a time and snaps to the next/prev
-        on a vertical swipe — it can never rest between two glyphs. loopViews
-        lets it roll past the ends back around.
+        Exactly one glyph, rendered full-size. A StackView/ListView is not used
+        on purpose: StackView always draws its items as a scaled-down 3D deck
+        with the next card peeking out behind, which shrank the glyph and let
+        two glyphs show at once.
     -->
-    <StackView
-        android:id="@+id/widget_list"
+    <ImageView
+        android:id="@+id/widget_glyph_image"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:loopViews="true"
-        android:gravity="center" />
+        android:scaleType="fitCenter" />
+
+    <!-- Edge chevrons page to the previous/next glyph; hidden when the
+         widget shows a single glyph. Full-height strips for easy tapping. -->
+    <TextView
+        android:id="@+id/widget_prev"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_gravity="start|center_vertical"
+        android:gravity="center"
+        android:paddingHorizontal="8dp"
+        android:text="‹"
+        android:textColor="#666666"
+        android:textSize="22sp"
+        android:contentDescription="@string/widget_prev"
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/widget_next"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_gravity="end|center_vertical"
+        android:gravity="center"
+        android:paddingHorizontal="8dp"
+        android:text="›"
+        android:textColor="#666666"
+        android:textSize="22sp"
+        android:contentDescription="@string/widget_next"
+        android:visibility="gone" />
 
     <TextView
         android:id="@+id/widget_empty"
