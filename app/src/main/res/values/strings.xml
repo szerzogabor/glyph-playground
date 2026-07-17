@@ -2,6 +2,8 @@
 <resources>
     <string name="app_name">Glyph Playground</string>
     <string name="widget_empty">Tap to choose glyphs.</string>
+    <string name="widget_prev">Previous glyph</string>
+    <string name="widget_next">Next glyph</string>
     <string name="widget_label">Glyph Matrix</string>
     <string name="toy_name">Glyph Playground</string>
     <string name="toy_summary">Show your saved glyphs on the Glyph Matrix</string>
