@@ -75,7 +75,7 @@ class GlyphWidgetProvider : AppWidgetProvider() {
             GlyphWidgetDisplayService.hide(context)
         } else {
             WidgetPrefs.setActiveGlyphId(context, glyphId)
-            GlyphWidgetDisplayService.show(context, pattern.activeLeds, pattern.brightness)
+            GlyphWidgetDisplayService.show(context, pattern.activeLeds)
         }
         refreshAll(context)
     }

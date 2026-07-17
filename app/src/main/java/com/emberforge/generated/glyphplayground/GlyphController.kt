@@ -2,18 +2,20 @@ package com.emberforge.generated.glyphplayground
 
 import android.content.ComponentName
 import android.content.Context
+import android.provider.Settings
 import android.util.Log
 import com.nothing.ketchum.Glyph
 import com.nothing.ketchum.GlyphMatrixManager
 
 class GlyphController(context: Context) {
 
+    private val appContext: Context = context.applicationContext
     private var manager: GlyphMatrixManager? = null
     private var connected = false
 
     init {
         try {
-            manager = GlyphMatrixManager.getInstance(context.applicationContext)
+            manager = GlyphMatrixManager.getInstance(appContext)
         } catch (e: Exception) {
             Log.w(TAG, "Glyph SDK not available", e)
         }
@@ -38,10 +40,10 @@ class GlyphController(context: Context) {
 
     val isAvailable get() = connected
 
-    fun displayPattern(activeLeds: Set<Int>, brightness: Int = MAX_BRIGHTNESS) {
+    fun displayPattern(activeLeds: Set<Int>) {
         if (!connected) return
         try {
-            val b = brightness.coerceIn(0, MAX_BRIGHTNESS)
+            val b = getSystemGlyphBrightness(appContext)
             val colors = IntArray(GlyphLayout.TOTAL_LEDS) { if (it in activeLeds) b else 0 }
             manager?.setAppMatrixFrame(colors)
         } catch (e: Exception) {
@@ -70,5 +72,18 @@ class GlyphController(context: Context) {
     companion object {
         private const val TAG = "GlyphController"
         const val MAX_BRIGHTNESS = 4095
+
+        fun getSystemGlyphBrightness(context: Context): Int {
+            return try {
+                val fraction = Settings.System.getFloat(
+                    context.contentResolver,
+                    Settings.System.SCREEN_BRIGHTNESS_FLOAT,
+                    0.5f
+                )
+                (fraction.coerceIn(0f, 1f) * MAX_BRIGHTNESS).toInt().coerceAtLeast(1)
+            } catch (_: Exception) {
+                MAX_BRIGHTNESS
+            }
+        }
     }
 }

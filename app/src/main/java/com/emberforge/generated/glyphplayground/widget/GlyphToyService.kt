@@ -116,10 +116,10 @@ class GlyphToyService : Service() {
     private fun renderCurrent() {
         val mgr = gm ?: return
         if (!connected) return
-        val pattern = glyphs.getOrNull(index) ?: return
+        val leds = glyphs.getOrNull(index)?.activeLeds ?: emptySet()
         try {
-            val b = pattern.brightness.coerceIn(0, GlyphController.MAX_BRIGHTNESS)
-            val colors = IntArray(GlyphLayout.TOTAL_LEDS) { if (it in pattern.activeLeds) b else 0 }
+            val b = GlyphController.getSystemGlyphBrightness(this)
+            val colors = IntArray(GlyphLayout.TOTAL_LEDS) { if (it in leds) b else 0 }
             mgr.setMatrixFrame(colors)
         } catch (e: Exception) {
             Log.e(TAG, "Failed to render glyph", e)
