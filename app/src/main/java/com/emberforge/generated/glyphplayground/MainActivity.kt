@@ -1,10 +1,13 @@
 package com.emberforge.generated.glyphplayground
 
+import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -35,6 +38,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -65,9 +69,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.FileProvider
 import com.emberforge.generated.glyphplayground.ui.GlyphMatrixCanvas
 import com.emberforge.generated.glyphplayground.ui.GlyphMatrixPreview
 import com.emberforge.generated.glyphplayground.widget.GlyphWidgetProvider
+import java.io.File
 
 private val NothingBlack = Color(0xFF000000)
 private val NothingCard = Color(0xFF161616)
@@ -111,6 +117,21 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+private fun shareGlyph(context: android.content.Context, pattern: GlyphPattern) {
+    val cacheDir = File(context.cacheDir, "shared_glyphs").apply { mkdirs() }
+    val fileName = pattern.name.replace(Regex("[^a-zA-Z0-9_-]"), "_") + ".glyph"
+    val file = File(cacheDir, fileName)
+    file.writeText(PatternRepository.toExportJson(pattern))
+    val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+    val intent = Intent(Intent.ACTION_SEND).apply {
+        type = "application/json"
+        putExtra(Intent.EXTRA_STREAM, uri)
+        putExtra(Intent.EXTRA_SUBJECT, "Glyph: ${pattern.name}")
+        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    }
+    context.startActivity(Intent.createChooser(intent, "Share Glyph"))
+}
+
 private enum class Screen { EDITOR, LIBRARY }
 
 @Composable
@@ -123,8 +144,47 @@ private fun GlyphPlaygroundApp(repo: PatternRepository, glyph: GlyphController) 
     val context = LocalContext.current
     val refreshPatterns = {
         patterns = repo.loadAll()
-        // Keep any placed home-screen widgets in sync with the library.
         GlyphWidgetProvider.refreshAll(context)
+    }
+
+    var patternToExport by remember { mutableStateOf<GlyphPattern?>(null) }
+
+    val exportLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("application/json")
+    ) { uri ->
+        if (uri != null) {
+            patternToExport?.let { pattern ->
+                try {
+                    context.contentResolver.openOutputStream(uri)?.use {
+                        it.write(PatternRepository.toExportJson(pattern).toByteArray())
+                    }
+                    Toast.makeText(context, "Pattern exported!", Toast.LENGTH_SHORT).show()
+                } catch (_: Exception) {
+                    Toast.makeText(context, "Export failed", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+        patternToExport = null
+    }
+
+    val importLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri != null) {
+            try {
+                val text = context.contentResolver.openInputStream(uri)?.bufferedReader()?.readText()
+                val pattern = text?.let { PatternRepository.fromImportJson(it) }
+                if (pattern != null) {
+                    repo.save(pattern)
+                    refreshPatterns()
+                    Toast.makeText(context, "\"${pattern.name}\" imported!", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(context, "Invalid glyph file", Toast.LENGTH_SHORT).show()
+                }
+            } catch (_: Exception) {
+                Toast.makeText(context, "Import failed", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
     Box(
@@ -144,7 +204,10 @@ private fun GlyphPlaygroundApp(repo: PatternRepository, glyph: GlyphController) 
                     editingPattern = null
                     refreshPatterns()
                 },
-                onCancelEdit = { editingPattern = null }
+                onCancelEdit = { editingPattern = null },
+                onShare = { leds ->
+                    shareGlyph(context, GlyphPattern(name = "Glyph", activeLeds = leds))
+                }
             )
             Screen.LIBRARY -> LibraryScreen(
                 patterns = patterns,
@@ -162,6 +225,15 @@ private fun GlyphPlaygroundApp(repo: PatternRepository, glyph: GlyphController) 
                 onDelete = { pattern ->
                     repo.delete(pattern.id)
                     refreshPatterns()
+                },
+                onImport = {
+                    importLauncher.launch(arrayOf("application/json", "application/octet-stream", "*/*"))
+                },
+                onShare = { pattern -> shareGlyph(context, pattern) },
+                onExport = { pattern ->
+                    patternToExport = pattern
+                    val fileName = pattern.name.replace(Regex("[^a-zA-Z0-9_-]"), "_") + ".glyph"
+                    exportLauncher.launch(fileName)
                 }
             )
         }
@@ -177,7 +249,8 @@ private fun EditorScreen(
     glyph: GlyphController,
     editingPattern: GlyphPattern?,
     onPatternSaved: () -> Unit,
-    onCancelEdit: () -> Unit
+    onCancelEdit: () -> Unit,
+    onShare: (Set<Int>) -> Unit
 ) {
     var showSaveDialog by remember { mutableStateOf(false) }
     var glyphOn by remember { mutableStateOf(false) }
@@ -217,25 +290,49 @@ private fun EditorScreen(
                     overflow = TextOverflow.Ellipsis
                 )
             }
-            IconButton(onClick = onOpenLibrary) {
-                Box(
-                    modifier = Modifier
-                        .size(36.dp)
-                        .clip(CircleShape)
-                        .background(NothingCard),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(4.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
+            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                IconButton(onClick = {
+                    if (activeLeds.isNotEmpty()) {
+                        onShare(activeLeds)
+                    } else {
+                        Toast.makeText(context, "Draw something first!", Toast.LENGTH_SHORT).show()
+                    }
+                }) {
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(NothingCard),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Box(Modifier.size(5.dp).clip(RoundedCornerShape(1.dp)).background(NothingWhite))
-                            Box(Modifier.size(5.dp).clip(RoundedCornerShape(1.dp)).background(NothingWhite))
-                        }
-                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Box(Modifier.size(5.dp).clip(RoundedCornerShape(1.dp)).background(NothingWhite))
-                            Box(Modifier.size(5.dp).clip(RoundedCornerShape(1.dp)).background(NothingWhite))
+                        Icon(
+                            Icons.Default.Share,
+                            contentDescription = "Share",
+                            tint = NothingWhite,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                }
+                IconButton(onClick = onOpenLibrary) {
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(NothingCard),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(4.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Box(Modifier.size(5.dp).clip(RoundedCornerShape(1.dp)).background(NothingWhite))
+                                Box(Modifier.size(5.dp).clip(RoundedCornerShape(1.dp)).background(NothingWhite))
+                            }
+                            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Box(Modifier.size(5.dp).clip(RoundedCornerShape(1.dp)).background(NothingWhite))
+                                Box(Modifier.size(5.dp).clip(RoundedCornerShape(1.dp)).background(NothingWhite))
+                            }
                         }
                     }
                 }
@@ -505,7 +602,10 @@ private fun LibraryScreen(
     onBack: () -> Unit,
     onSelect: (GlyphPattern) -> Unit,
     onModify: (GlyphPattern) -> Unit,
-    onDelete: (GlyphPattern) -> Unit
+    onDelete: (GlyphPattern) -> Unit,
+    onImport: () -> Unit,
+    onShare: (GlyphPattern) -> Unit,
+    onExport: (GlyphPattern) -> Unit
 ) {
     val statusBarPadding = WindowInsets.statusBars.asPaddingValues()
 
@@ -519,18 +619,32 @@ private fun LibraryScreen(
 
         Row(
             modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            IconButton(onClick = onBack) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = NothingWhite)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onClick = onBack) {
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = NothingWhite)
+                }
+                Text(
+                    text = "SAVED PATTERNS",
+                    color = NothingWhite,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 2.sp
+                )
             }
-            Text(
-                text = "SAVED PATTERNS",
-                color = NothingWhite,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 2.sp
-            )
+            Button(
+                onClick = onImport,
+                shape = RoundedCornerShape(10.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = NothingAccent,
+                    contentColor = NothingBlack
+                ),
+                contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
+            ) {
+                Text("Import", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+            }
         }
 
         Spacer(Modifier.height(4.dp))
@@ -573,7 +687,9 @@ private fun LibraryScreen(
                         pattern = pattern,
                         onClick = { onSelect(pattern) },
                         onModify = { onModify(pattern) },
-                        onDelete = { onDelete(pattern) }
+                        onDelete = { onDelete(pattern) },
+                        onShare = { onShare(pattern) },
+                        onExport = { onExport(pattern) }
                     )
                 }
             }
@@ -586,9 +702,12 @@ private fun PatternCard(
     pattern: GlyphPattern,
     onClick: () -> Unit,
     onModify: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    onShare: () -> Unit,
+    onExport: () -> Unit
 ) {
     var showDeleteConfirm by remember { mutableStateOf(false) }
+    var showActionsMenu by remember { mutableStateOf(false) }
 
     Card(
         modifier = Modifier
@@ -646,6 +765,17 @@ private fun PatternCard(
                     )
                 }
                 IconButton(
+                    onClick = { showActionsMenu = true },
+                    modifier = Modifier.size(32.dp)
+                ) {
+                    Icon(
+                        Icons.Default.Share,
+                        contentDescription = "Share",
+                        tint = NothingWhite,
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+                IconButton(
                     onClick = { showDeleteConfirm = true },
                     modifier = Modifier.size(32.dp)
                 ) {
@@ -658,6 +788,49 @@ private fun PatternCard(
                 }
             }
         }
+    }
+
+    if (showActionsMenu) {
+        AlertDialog(
+            onDismissRequest = { showActionsMenu = false },
+            containerColor = NothingCard,
+            title = {
+                Text(pattern.name, color = NothingWhite, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Button(
+                        onClick = { showActionsMenu = false; onShare() },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = NothingAccent,
+                            contentColor = NothingBlack
+                        ),
+                        contentPadding = PaddingValues(vertical = 12.dp)
+                    ) {
+                        Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text("Share", fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                    }
+                    OutlinedButton(
+                        onClick = { showActionsMenu = false; onExport() },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = NothingWhite),
+                        contentPadding = PaddingValues(vertical = 12.dp)
+                    ) {
+                        Text("Export to file", fontSize = 14.sp)
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = {
+                TextButton(onClick = { showActionsMenu = false }) {
+                    Text("Cancel", color = NothingDim)
+                }
+            }
+        )
     }
 
     if (showDeleteConfirm) {
