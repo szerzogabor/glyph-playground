@@ -42,14 +42,45 @@ class PatternRepository(context: Context) {
     }
 
     private fun load(id: String): GlyphPattern? = try {
-        val obj = JSONObject(prefs.getString("p_$id", "")!!)
-        val leds = mutableSetOf<Int>()
-        val arr = obj.getJSONArray("leds")
-        for (i in 0 until arr.length()) leds.add(arr.getInt(i))
-        GlyphPattern(obj.getString("id"), obj.getString("name"), leds, obj.getLong("createdAt"))
+        parseJson(prefs.getString("p_$id", "")!!)
     } catch (_: Exception) {
         null
     }
 
     private fun allIds(): Set<String> = prefs.getStringSet("ids", emptySet()) ?: emptySet()
+
+    companion object {
+        fun toExportJson(pattern: GlyphPattern): String {
+            return JSONObject().apply {
+                put("version", 1)
+                put("name", pattern.name)
+                put("gridSize", GlyphLayout.GRID_SIZE)
+                put("leds", JSONArray(pattern.activeLeds.sorted().toList()))
+            }.toString(2)
+        }
+
+        fun fromImportJson(jsonString: String): GlyphPattern? = try {
+            val obj = JSONObject(jsonString)
+            val leds = mutableSetOf<Int>()
+            val arr = obj.getJSONArray("leds")
+            for (i in 0 until arr.length()) {
+                val idx = arr.getInt(i)
+                if (GlyphLayout.isInsideCircle(idx)) leds.add(idx)
+            }
+            GlyphPattern(
+                name = obj.getString("name"),
+                activeLeds = leds
+            )
+        } catch (_: Exception) {
+            null
+        }
+
+        private fun parseJson(raw: String): GlyphPattern {
+            val obj = JSONObject(raw)
+            val leds = mutableSetOf<Int>()
+            val arr = obj.getJSONArray("leds")
+            for (i in 0 until arr.length()) leds.add(arr.getInt(i))
+            return GlyphPattern(obj.getString("id"), obj.getString("name"), leds, obj.getLong("createdAt"))
+        }
+    }
 }
