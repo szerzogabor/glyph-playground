@@ -74,6 +74,7 @@ import androidx.core.content.FileProvider
 import com.emberforge.generated.glyphplayground.ui.GlyphMatrixCanvas
 import com.emberforge.generated.glyphplayground.ui.GlyphMatrixPreview
 import com.emberforge.generated.glyphplayground.ui.PictureToGlyphScreen
+import com.emberforge.generated.glyphplayground.widget.GlyphWidgetDisplayService
 import com.emberforge.generated.glyphplayground.widget.GlyphWidgetProvider
 import java.io.File
 
@@ -99,23 +100,15 @@ private val AppColorScheme = darkColorScheme(
 
 class MainActivity : ComponentActivity() {
 
-    private var glyphController: GlyphController? = null
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         val repo = PatternRepository(this)
-        glyphController = GlyphController(this).also { it.init() }
         setContent {
             MaterialTheme(colorScheme = AppColorScheme) {
-                GlyphPlaygroundApp(repo, glyphController!!)
+                GlyphPlaygroundApp(repo)
             }
         }
-    }
-
-    override fun onDestroy() {
-        glyphController?.destroy()
-        super.onDestroy()
     }
 }
 
@@ -137,7 +130,7 @@ private fun shareGlyph(context: android.content.Context, pattern: GlyphPattern) 
 private enum class Screen { EDITOR, LIBRARY, PICTURE_TO_GLYPH }
 
 @Composable
-private fun GlyphPlaygroundApp(repo: PatternRepository, glyph: GlyphController) {
+private fun GlyphPlaygroundApp(repo: PatternRepository) {
     var screen by remember { mutableStateOf(Screen.EDITOR) }
     var activeLeds by remember { mutableStateOf(setOf<Int>()) }
     var ledBrightness by remember { mutableStateOf(mapOf<Int, Int>()) }
@@ -206,7 +199,6 @@ private fun GlyphPlaygroundApp(repo: PatternRepository, glyph: GlyphController) 
                 onOpenLibrary = { screen = Screen.LIBRARY },
                 onOpenPictureToGlyph = { screen = Screen.PICTURE_TO_GLYPH },
                 repo = repo,
-                glyph = glyph,
                 editingPattern = editingPattern,
                 onPatternSaved = {
                     editingPattern = null
@@ -267,7 +259,6 @@ private fun EditorScreen(
     onOpenLibrary: () -> Unit,
     onOpenPictureToGlyph: () -> Unit,
     repo: PatternRepository,
-    glyph: GlyphController,
     editingPattern: GlyphPattern?,
     onPatternSaved: () -> Unit,
     onCancelEdit: () -> Unit,
@@ -489,11 +480,11 @@ private fun EditorScreen(
             Button(
                 onClick = {
                     if (glyphOn) {
-                        glyph.clear()
+                        GlyphWidgetDisplayService.hide(context)
                         glyphOn = false
                     } else {
                         if (activeLeds.isNotEmpty()) {
-                            glyph.displayPattern(activeLeds, ledBrightness)
+                            GlyphWidgetDisplayService.show(context, activeLeds, ledBrightness)
                             glyphOn = true
                         } else {
                             Toast.makeText(context, "Draw something first!", Toast.LENGTH_SHORT).show()
