@@ -38,6 +38,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -72,6 +73,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
 import com.emberforge.generated.glyphplayground.ui.GlyphMatrixCanvas
 import com.emberforge.generated.glyphplayground.ui.GlyphMatrixPreview
+import com.emberforge.generated.glyphplayground.ui.PictureToGlyphScreen
 import com.emberforge.generated.glyphplayground.widget.GlyphWidgetProvider
 import java.io.File
 
@@ -132,7 +134,7 @@ private fun shareGlyph(context: android.content.Context, pattern: GlyphPattern) 
     context.startActivity(Intent.createChooser(intent, "Share Glyph"))
 }
 
-private enum class Screen { EDITOR, LIBRARY }
+private enum class Screen { EDITOR, LIBRARY, PICTURE_TO_GLYPH }
 
 @Composable
 private fun GlyphPlaygroundApp(repo: PatternRepository, glyph: GlyphController) {
@@ -197,6 +199,7 @@ private fun GlyphPlaygroundApp(repo: PatternRepository, glyph: GlyphController) 
                 activeLeds = activeLeds,
                 onLedsChanged = { activeLeds = it },
                 onOpenLibrary = { screen = Screen.LIBRARY },
+                onOpenPictureToGlyph = { screen = Screen.PICTURE_TO_GLYPH },
                 repo = repo,
                 glyph = glyph,
                 editingPattern = editingPattern,
@@ -236,6 +239,14 @@ private fun GlyphPlaygroundApp(repo: PatternRepository, glyph: GlyphController) 
                     exportLauncher.launch(fileName)
                 }
             )
+            Screen.PICTURE_TO_GLYPH -> PictureToGlyphScreen(
+                onBack = { screen = Screen.EDITOR },
+                onApply = { leds ->
+                    activeLeds = leds
+                    editingPattern = null
+                    screen = Screen.EDITOR
+                }
+            )
         }
     }
 }
@@ -245,6 +256,7 @@ private fun EditorScreen(
     activeLeds: Set<Int>,
     onLedsChanged: (Set<Int>) -> Unit,
     onOpenLibrary: () -> Unit,
+    onOpenPictureToGlyph: () -> Unit,
     repo: PatternRepository,
     glyph: GlyphController,
     editingPattern: GlyphPattern?,
@@ -291,6 +303,22 @@ private fun EditorScreen(
                 )
             }
             Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                IconButton(onClick = onOpenPictureToGlyph) {
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(NothingCard),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            Icons.Default.PhotoCamera,
+                            contentDescription = "Picture to Glyph",
+                            tint = NothingWhite,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                }
                 IconButton(onClick = {
                     if (activeLeds.isNotEmpty()) {
                         onShare(activeLeds)
