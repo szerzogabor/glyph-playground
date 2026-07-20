@@ -75,7 +75,7 @@ class GlyphWidgetProvider : AppWidgetProvider() {
             GlyphWidgetDisplayService.hide(context)
         } else {
             WidgetPrefs.setActiveGlyphId(context, glyphId)
-            GlyphWidgetDisplayService.show(context, pattern.activeLeds)
+            GlyphWidgetDisplayService.show(context, pattern.activeLeds, pattern.ledBrightness)
         }
         refreshAll(context)
     }
@@ -128,7 +128,7 @@ class GlyphWidgetProvider : AppWidgetProvider() {
 
             views.setImageViewBitmap(
                 R.id.widget_glyph_image,
-                GlyphBitmapRenderer.render(pattern.activeLeds, BITMAP_PX, lit)
+                GlyphBitmapRenderer.render(pattern.activeLeds, BITMAP_PX, lit, pattern.ledBrightness)
             )
             views.setContentDescription(R.id.widget_glyph_image, pattern.name)
             views.setViewVisibility(R.id.widget_glyph_image, View.VISIBLE)

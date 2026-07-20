@@ -34,14 +34,11 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -61,7 +58,6 @@ import com.emberforge.generated.glyphplayground.ImageToGlyph
 
 private val NothingBlack = Color(0xFF000000)
 private val NothingCard = Color(0xFF161616)
-private val NothingBorder = Color(0xFF2A2A2A)
 private val NothingWhite = Color(0xFFFFFFFF)
 private val NothingDim = Color(0xFF777777)
 private val NothingAccent = Color(0xFFD0FD3E)
@@ -69,13 +65,12 @@ private val NothingAccent = Color(0xFFD0FD3E)
 @Composable
 fun PictureToGlyphScreen(
     onBack: () -> Unit,
-    onApply: (Set<Int>) -> Unit
+    onApply: (Set<Int>, Map<Int, Int>) -> Unit
 ) {
     val context = LocalContext.current
     var bitmap by remember { mutableStateOf<Bitmap?>(null) }
-    var threshold by remember { mutableFloatStateOf(0.5f) }
     var invert by remember { mutableStateOf(true) }
-    var previewLeds by remember { mutableStateOf<Set<Int>>(emptySet()) }
+    var previewBrightness by remember { mutableStateOf<Map<Int, Int>>(emptyMap()) }
 
     val pickerLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.GetContent()
@@ -93,17 +88,17 @@ fun PictureToGlyphScreen(
                     MediaStore.Images.Media.getBitmap(context.contentResolver, it)
                 }
                 bitmap = bmp
-                previewLeds = ImageToGlyph.convert(bmp, threshold, invert)
+                previewBrightness = ImageToGlyph.convertWithBrightness(bmp, invert)
             } catch (_: Exception) {
                 bitmap = null
-                previewLeds = emptySet()
+                previewBrightness = emptyMap()
             }
         }
     }
 
     fun recalculate() {
         bitmap?.let { bmp ->
-            previewLeds = ImageToGlyph.convert(bmp, threshold, invert)
+            previewBrightness = ImageToGlyph.convertWithBrightness(bmp, invert)
         }
     }
 
@@ -194,8 +189,9 @@ fun PictureToGlyphScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     GlyphMatrixPreview(
-                        activeLeds = previewLeds,
-                        modifier = Modifier.fillMaxSize().padding(4.dp)
+                        activeLeds = previewBrightness.keys,
+                        modifier = Modifier.fillMaxSize().padding(4.dp),
+                        ledBrightness = previewBrightness
                     )
                 }
             }
@@ -203,50 +199,13 @@ fun PictureToGlyphScreen(
             Spacer(Modifier.height(16.dp))
 
             Text(
-                text = "${previewLeds.size} / ${GlyphLayout.VALID_LED_COUNT} LEDs",
+                text = "${previewBrightness.size} / ${GlyphLayout.VALID_LED_COUNT} LEDs active",
                 color = NothingDim,
                 fontSize = 13.sp,
                 fontFamily = FontFamily.Monospace
             )
 
             Spacer(Modifier.height(16.dp))
-
-            Text(
-                text = "THRESHOLD",
-                color = NothingDim,
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Medium,
-                letterSpacing = 3.sp
-            )
-            Spacer(Modifier.height(4.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Slider(
-                    value = threshold,
-                    onValueChange = {
-                        threshold = it
-                        recalculate()
-                    },
-                    valueRange = 0.05f..0.95f,
-                    modifier = Modifier.weight(1f),
-                    colors = SliderDefaults.colors(
-                        thumbColor = NothingAccent,
-                        activeTrackColor = NothingAccent,
-                        inactiveTrackColor = NothingBorder
-                    )
-                )
-                Text(
-                    text = "${(threshold * 100).toInt()}%",
-                    color = NothingWhite,
-                    fontSize = 13.sp,
-                    fontFamily = FontFamily.Monospace,
-                    modifier = Modifier.width(44.dp)
-                )
-            }
-
-            Spacer(Modifier.height(8.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -292,7 +251,7 @@ fun PictureToGlyphScreen(
 
         if (bitmap != null) {
             Button(
-                onClick = { onApply(previewLeds) },
+                onClick = { onApply(previewBrightness.keys, previewBrightness) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 24.dp),
@@ -301,7 +260,7 @@ fun PictureToGlyphScreen(
                     containerColor = NothingAccent,
                     contentColor = NothingBlack
                 ),
-                enabled = previewLeds.isNotEmpty(),
+                enabled = previewBrightness.isNotEmpty(),
                 contentPadding = PaddingValues(vertical = 14.dp)
             ) {
                 Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(18.dp))
