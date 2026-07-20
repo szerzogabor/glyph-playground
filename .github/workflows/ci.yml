@@ -82,3 +82,17 @@ jobs:
             metadata.json \
             --title "v${VERSION_NAME}" \
             --notes "Automated build from main (run #${VERSION_CODE})."
+
+      - name: Prune old releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Keep only the 10 most recent releases; delete the older ones
+          # (and their tags) so the Releases list doesn't grow unbounded.
+          gh release list --limit 1000 --json tagName,createdAt \
+            --jq 'sort_by(.createdAt) | reverse | .[10:] | .[].tagName' \
+            | while read -r tag; do
+                [ -z "$tag" ] && continue
+                echo "Deleting old release $tag"
+                gh release delete "$tag" --cleanup-tag --yes
+              done
