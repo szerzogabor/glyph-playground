@@ -38,10 +38,14 @@ class GlyphController(context: Context) {
 
     val isAvailable get() = connected
 
-    fun displayPattern(activeLeds: Set<Int>) {
+    fun displayPattern(activeLeds: Set<Int>, ledBrightness: Map<Int, Int> = emptyMap()) {
         if (!connected) return
         try {
-            val colors = IntArray(GlyphLayout.TOTAL_LEDS) { if (it in activeLeds) MAX_BRIGHTNESS else 0 }
+            val colors = if (ledBrightness.isNotEmpty()) {
+                IntArray(GlyphLayout.TOTAL_LEDS) { ledBrightness.getOrDefault(it, 0) }
+            } else {
+                IntArray(GlyphLayout.TOTAL_LEDS) { if (it in activeLeds) MAX_BRIGHTNESS else 0 }
+            }
             manager?.setAppMatrixFrame(colors)
         } catch (e: Exception) {
             Log.e(TAG, "Failed to display pattern", e)

@@ -32,6 +32,7 @@ class GlyphWidgetDisplayService : Service() {
     private var connected = false
 
     private var pendingLeds: Set<Int>? = null
+    private var pendingBrightness: Map<Int, Int> = emptyMap()
     private var pendingClear = false
 
     override fun onBind(intent: Intent?): IBinder? = null
@@ -65,6 +66,13 @@ class GlyphWidgetDisplayService : Service() {
         when (intent?.action) {
             ACTION_SHOW -> {
                 pendingLeds = intent.getIntArrayExtra(EXTRA_LEDS)?.toSet() ?: emptySet()
+                val bKeys = intent.getIntArrayExtra(EXTRA_BRIGHTNESS_KEYS)
+                val bVals = intent.getIntArrayExtra(EXTRA_BRIGHTNESS_VALS)
+                pendingBrightness = if (bKeys != null && bVals != null && bKeys.size == bVals.size) {
+                    bKeys.zip(bVals).toMap()
+                } else {
+                    emptyMap()
+                }
                 pendingClear = false
             }
             ACTION_HIDE -> {
@@ -87,9 +95,15 @@ class GlyphWidgetDisplayService : Service() {
                 }
                 pendingLeds != null -> {
                     val leds = pendingLeds!!
-                    val colors = IntArray(GlyphLayout.TOTAL_LEDS) { if (it in leds) GlyphController.MAX_BRIGHTNESS else 0 }
+                    val brightness = pendingBrightness
+                    val colors = if (brightness.isNotEmpty()) {
+                        IntArray(GlyphLayout.TOTAL_LEDS) { brightness.getOrDefault(it, 0) }
+                    } else {
+                        IntArray(GlyphLayout.TOTAL_LEDS) { if (it in leds) GlyphController.MAX_BRIGHTNESS else 0 }
+                    }
                     mgr.setMatrixFrame(colors)
                     pendingLeds = null
+                    pendingBrightness = emptyMap()
                 }
             }
         } catch (e: Exception) {
@@ -140,11 +154,17 @@ class GlyphWidgetDisplayService : Service() {
         private const val ACTION_SHOW = "com.emberforge.generated.glyphplayground.widget.SHOW"
         private const val ACTION_HIDE = "com.emberforge.generated.glyphplayground.widget.HIDE"
         private const val EXTRA_LEDS = "leds"
+        private const val EXTRA_BRIGHTNESS_KEYS = "brightness_keys"
+        private const val EXTRA_BRIGHTNESS_VALS = "brightness_vals"
 
-        fun show(context: Context, leds: Set<Int>) {
+        fun show(context: Context, leds: Set<Int>, ledBrightness: Map<Int, Int> = emptyMap()) {
             val intent = Intent(context, GlyphWidgetDisplayService::class.java).apply {
                 action = ACTION_SHOW
                 putExtra(EXTRA_LEDS, leds.toIntArray())
+                if (ledBrightness.isNotEmpty()) {
+                    putExtra(EXTRA_BRIGHTNESS_KEYS, ledBrightness.keys.toIntArray())
+                    putExtra(EXTRA_BRIGHTNESS_VALS, ledBrightness.values.toIntArray())
+                }
             }
             context.startForegroundService(intent)
         }

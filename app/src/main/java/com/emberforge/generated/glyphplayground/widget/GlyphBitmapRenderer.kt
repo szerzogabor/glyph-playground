@@ -4,18 +4,9 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.Path
+import com.emberforge.generated.glyphplayground.GlyphController
 import com.emberforge.generated.glyphplayground.GlyphLayout
 
-/**
- * Renders a Glyph pattern into a [Bitmap] so it can be shown inside an app
- * widget via `RemoteViews.setImageViewBitmap`. Compose Canvas can't be used
- * in widgets, so this mirrors the look of `GlyphMatrixPreview`: a circular
- * disc of round LED dots.
- *
- * When [lit] is true the glyph is the one currently displayed on the physical
- * Glyph Matrix: its dots glow in the Nothing accent green. That green is the
- * widget's active-state cue — no ring, no text.
- */
 object GlyphBitmapRenderer {
 
     private const val G = GlyphLayout.GRID_SIZE
@@ -25,7 +16,12 @@ object GlyphBitmapRenderer {
     private const val COLOR_LED_ON = 0xFFFFFFFF.toInt()
     private const val COLOR_ACCENT = 0xFFD0FD3E.toInt()
 
-    fun render(activeLeds: Set<Int>, sizePx: Int, lit: Boolean = false): Bitmap {
+    fun render(
+        activeLeds: Set<Int>,
+        sizePx: Int,
+        lit: Boolean = false,
+        ledBrightness: Map<Int, Int> = emptyMap()
+    ): Bitmap {
         val size = sizePx.coerceAtLeast(G)
         val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
@@ -45,13 +41,21 @@ object GlyphBitmapRenderer {
         val gap = (cell * 0.08f).coerceAtLeast(0.5f)
         val dot = cell - 2 * gap
         val dotPaint = Paint(Paint.ANTI_ALIAS_FLAG)
-        val ledOn = if (lit) COLOR_ACCENT else COLOR_LED_ON
+        val useGrayscale = ledBrightness.isNotEmpty()
 
         for (row in 0 until G) {
             for (col in 0 until G) {
                 val idx = row * G + col
                 if (!GlyphLayout.isInsideCircle(idx)) continue
-                dotPaint.color = if (idx in activeLeds) ledOn else COLOR_LED_OFF
+
+                dotPaint.color = if (useGrayscale) {
+                    val b = ledBrightness.getOrDefault(idx, 0)
+                    val fraction = b.toFloat() / GlyphController.MAX_BRIGHTNESS
+                    lerpColor(COLOR_LED_OFF, if (lit) COLOR_ACCENT else COLOR_LED_ON, fraction)
+                } else {
+                    if (idx in activeLeds) (if (lit) COLOR_ACCENT else COLOR_LED_ON) else COLOR_LED_OFF
+                }
+
                 val left = col * cell + gap
                 val top = row * cell + gap
                 canvas.drawCircle(left + dot / 2f, top + dot / 2f, dot / 2f, dotPaint)
@@ -59,7 +63,17 @@ object GlyphBitmapRenderer {
         }
 
         canvas.restoreToCount(save)
-
         return bitmap
     }
+
+    private fun lerpColor(from: Int, to: Int, fraction: Float): Int {
+        val f = fraction.coerceIn(0f, 1f)
+        val a = lerp((from shr 24) and 0xFF, (to shr 24) and 0xFF, f)
+        val r = lerp((from shr 16) and 0xFF, (to shr 16) and 0xFF, f)
+        val g = lerp((from shr 8) and 0xFF, (to shr 8) and 0xFF, f)
+        val b = lerp(from and 0xFF, to and 0xFF, f)
+        return (a shl 24) or (r shl 16) or (g shl 8) or b
+    }
+
+    private fun lerp(a: Int, b: Int, f: Float): Int = (a + (b - a) * f).toInt()
 }

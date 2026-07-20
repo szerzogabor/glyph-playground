@@ -248,7 +248,8 @@ private fun ConfigRow(
             ) {
                 GlyphMatrixPreview(
                     activeLeds = pattern.activeLeds,
-                    modifier = Modifier.fillMaxSize().padding(3.dp)
+                    modifier = Modifier.fillMaxSize().padding(3.dp),
+                    ledBrightness = pattern.ledBrightness
                 )
             }
             Spacer(Modifier.width(12.dp))
