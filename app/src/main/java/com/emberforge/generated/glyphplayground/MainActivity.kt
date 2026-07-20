@@ -140,6 +140,7 @@ private enum class Screen { EDITOR, LIBRARY, PICTURE_TO_GLYPH }
 private fun GlyphPlaygroundApp(repo: PatternRepository, glyph: GlyphController) {
     var screen by remember { mutableStateOf(Screen.EDITOR) }
     var activeLeds by remember { mutableStateOf(setOf<Int>()) }
+    var ledBrightness by remember { mutableStateOf(mapOf<Int, Int>()) }
     var patterns by remember { mutableStateOf(repo.loadAll()) }
     var editingPattern by remember { mutableStateOf<GlyphPattern?>(null) }
 
@@ -197,7 +198,11 @@ private fun GlyphPlaygroundApp(repo: PatternRepository, glyph: GlyphController) 
         when (screen) {
             Screen.EDITOR -> EditorScreen(
                 activeLeds = activeLeds,
-                onLedsChanged = { activeLeds = it },
+                ledBrightness = ledBrightness,
+                onLedsChanged = { leds ->
+                    activeLeds = leds
+                    ledBrightness = emptyMap()
+                },
                 onOpenLibrary = { screen = Screen.LIBRARY },
                 onOpenPictureToGlyph = { screen = Screen.PICTURE_TO_GLYPH },
                 repo = repo,
@@ -209,7 +214,7 @@ private fun GlyphPlaygroundApp(repo: PatternRepository, glyph: GlyphController) 
                 },
                 onCancelEdit = { editingPattern = null },
                 onShare = { leds ->
-                    shareGlyph(context, GlyphPattern(name = "Glyph", activeLeds = leds))
+                    shareGlyph(context, GlyphPattern(name = "Glyph", activeLeds = leds, ledBrightness = ledBrightness))
                 }
             )
             Screen.LIBRARY -> LibraryScreen(
@@ -217,11 +222,13 @@ private fun GlyphPlaygroundApp(repo: PatternRepository, glyph: GlyphController) 
                 onBack = { screen = Screen.EDITOR },
                 onSelect = { pattern ->
                     activeLeds = pattern.activeLeds
+                    ledBrightness = pattern.ledBrightness
                     editingPattern = null
                     screen = Screen.EDITOR
                 },
                 onModify = { pattern ->
                     activeLeds = pattern.activeLeds
+                    ledBrightness = pattern.ledBrightness
                     editingPattern = pattern
                     screen = Screen.EDITOR
                 },
@@ -241,8 +248,9 @@ private fun GlyphPlaygroundApp(repo: PatternRepository, glyph: GlyphController) 
             )
             Screen.PICTURE_TO_GLYPH -> PictureToGlyphScreen(
                 onBack = { screen = Screen.EDITOR },
-                onApply = { leds ->
+                onApply = { leds, brightness ->
                     activeLeds = leds
+                    ledBrightness = brightness
                     editingPattern = null
                     screen = Screen.EDITOR
                 }
@@ -254,6 +262,7 @@ private fun GlyphPlaygroundApp(repo: PatternRepository, glyph: GlyphController) 
 @Composable
 private fun EditorScreen(
     activeLeds: Set<Int>,
+    ledBrightness: Map<Int, Int>,
     onLedsChanged: (Set<Int>) -> Unit,
     onOpenLibrary: () -> Unit,
     onOpenPictureToGlyph: () -> Unit,
@@ -392,7 +401,8 @@ private fun EditorScreen(
             },
             modifier = Modifier
                 .fillMaxWidth()
-                .aspectRatio(1f)
+                .aspectRatio(1f),
+            ledBrightness = ledBrightness
         )
 
         Spacer(Modifier.height(12.dp))
@@ -423,7 +433,7 @@ private fun EditorScreen(
 
                 Button(
                     onClick = {
-                        repo.save(editingPattern.copy(activeLeds = activeLeds))
+                        repo.save(editingPattern.copy(activeLeds = activeLeds, ledBrightness = ledBrightness))
                         onPatternSaved()
                         Toast.makeText(context, "Pattern updated!", Toast.LENGTH_SHORT).show()
                     },
@@ -483,7 +493,7 @@ private fun EditorScreen(
                         glyphOn = false
                     } else {
                         if (activeLeds.isNotEmpty()) {
-                            glyph.displayPattern(activeLeds)
+                            glyph.displayPattern(activeLeds, ledBrightness)
                             glyphOn = true
                         } else {
                             Toast.makeText(context, "Draw something first!", Toast.LENGTH_SHORT).show()
@@ -511,7 +521,7 @@ private fun EditorScreen(
         SaveDialog(
             onDismiss = { showSaveDialog = false },
             onSave = { name ->
-                repo.save(GlyphPattern(name = name, activeLeds = activeLeds))
+                repo.save(GlyphPattern(name = name, activeLeds = activeLeds, ledBrightness = ledBrightness))
                 onPatternSaved()
                 showSaveDialog = false
                 Toast.makeText(context, "Pattern saved!", Toast.LENGTH_SHORT).show()
