@@ -53,6 +53,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.emberforge.generated.glyphplayground.GlyphController
 import com.emberforge.generated.glyphplayground.GlyphLayout
 import com.emberforge.generated.glyphplayground.ImageToGlyph
 
@@ -70,7 +71,19 @@ fun PictureToGlyphScreen(
     val context = LocalContext.current
     var bitmap by remember { mutableStateOf<Bitmap?>(null) }
     var invert by remember { mutableStateOf(true) }
+    var shading by remember { mutableStateOf(true) }
     var previewBrightness by remember { mutableStateOf<Map<Int, Int>>(emptyMap()) }
+
+    fun buildPreview(bmp: Bitmap): Map<Int, Int> {
+        val brightness = ImageToGlyph.convertWithBrightness(bmp, invert)
+        // With shading off, every lit LED gets full brightness so the
+        // preview is a flat black-and-white glyph instead of a grayscale one.
+        return if (shading) {
+            brightness
+        } else {
+            brightness.mapValues { GlyphController.MAX_BRIGHTNESS }
+        }
+    }
 
     val pickerLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.GetContent()
@@ -88,7 +101,7 @@ fun PictureToGlyphScreen(
                     MediaStore.Images.Media.getBitmap(context.contentResolver, it)
                 }
                 bitmap = bmp
-                previewBrightness = ImageToGlyph.convertWithBrightness(bmp, invert)
+                previewBrightness = buildPreview(bmp)
             } catch (_: Exception) {
                 bitmap = null
                 previewBrightness = emptyMap()
@@ -98,7 +111,7 @@ fun PictureToGlyphScreen(
 
     fun recalculate() {
         bitmap?.let { bmp ->
-            previewBrightness = ImageToGlyph.convertWithBrightness(bmp, invert)
+            previewBrightness = buildPreview(bmp)
         }
     }
 
@@ -223,6 +236,35 @@ fun PictureToGlyphScreen(
                     checked = invert,
                     onCheckedChange = {
                         invert = it
+                        recalculate()
+                    },
+                    colors = SwitchDefaults.colors(
+                        checkedThumbColor = NothingBlack,
+                        checkedTrackColor = NothingAccent,
+                        uncheckedThumbColor = NothingDim,
+                        uncheckedTrackColor = NothingCard
+                    )
+                )
+            }
+
+            Spacer(Modifier.height(12.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "SHADING",
+                    color = NothingDim,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Medium,
+                    letterSpacing = 3.sp
+                )
+                Switch(
+                    checked = shading,
+                    onCheckedChange = {
+                        shading = it
                         recalculate()
                     },
                     colors = SwitchDefaults.colors(
