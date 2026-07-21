@@ -1,6 +1,7 @@
 package com.emberforge.generated.glyphplayground
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -36,6 +37,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Coffee
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.PhotoCamera
@@ -125,6 +127,19 @@ private fun shareGlyph(context: android.content.Context, pattern: GlyphPattern) 
         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
     }
     context.startActivity(Intent.createChooser(intent, "Share Glyph"))
+}
+
+private const val BUY_ME_A_COFFEE_URL = "https://buymeacoffee.com/ogbar"
+
+private fun openBuyMeACoffee(context: android.content.Context) {
+    try {
+        context.startActivity(
+            Intent(Intent.ACTION_VIEW, Uri.parse(BUY_ME_A_COFFEE_URL))
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        )
+    } catch (_: Exception) {
+        Toast.makeText(context, "Couldn't open browser", Toast.LENGTH_SHORT).show()
+    }
 }
 
 private enum class Screen { EDITOR, LIBRARY, PICTURE_TO_GLYPH }
@@ -303,6 +318,22 @@ private fun EditorScreen(
                 )
             }
             Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                IconButton(onClick = { openBuyMeACoffee(context) }) {
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(NothingCard),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            Icons.Default.Coffee,
+                            contentDescription = "Buy me a coffee",
+                            tint = NothingAccent,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                }
                 IconButton(onClick = onOpenPictureToGlyph) {
                     Box(
                         modifier = Modifier
