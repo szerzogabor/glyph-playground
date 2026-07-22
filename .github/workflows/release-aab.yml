@@ -1,0 +1,76 @@
+name: Release AAB (manual)
+
+# Manually-triggered build of a signed Android App Bundle (.aab).
+# Unlike ci.yml (which builds an APK and cuts a GitHub Release on every
+# push to main), this workflow is run on demand from a chosen branch —
+# typically the release branch — and publishes the .aab as a downloadable
+# workflow artifact rather than a GitHub Release.
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Branch, tag or SHA to build from (defaults to the ref this run was started on, e.g. the release branch).'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+env:
+  # Keep versioning consistent with ci.yml: versionCode is the run number
+  # (monotonically increasing) and versionName is 1.0.<run_number>.
+  VERSION_CODE: ${{ github.run_number }}
+  VERSION_NAME: 1.0.${{ github.run_number }}
+
+jobs:
+  bundle:
+    name: Build & upload signed AAB
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Empty string falls back to the ref the workflow was dispatched
+          # on, so selecting the release branch in the UI "just works".
+          ref: ${{ inputs.ref }}
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.10.2'
+
+      # The app's release signingConfig points at the committed
+      # keystore/app-debug.keystore. Fail fast with a clear message if it
+      # is missing rather than producing an unsigned bundle. (Never
+      # regenerate it — a changed key breaks in-place updates.)
+      - name: Verify signing keystore is present
+        run: |
+          if [ ! -f keystore/app-debug.keystore ]; then
+            echo "::error::keystore/app-debug.keystore is missing on this ref. Run the main CI once to generate and commit it, or merge the release branch up to date." >&2
+            exit 1
+          fi
+
+      - name: Build signed release AAB
+        env:
+          APP_VERSION_CODE: ${{ env.VERSION_CODE }}
+          APP_VERSION_NAME: ${{ env.VERSION_NAME }}
+        run: gradle bundleRelease --no-daemon
+
+      - name: Stage AAB for upload
+        id: aab
+        run: |
+          AAB=app/build/outputs/bundle/release/app-release.aab
+          OUT=app-${VERSION_NAME}.aab
+          cp "$AAB" "$OUT"
+          echo "path=$OUT" >> "$GITHUB_OUTPUT"
+
+      - name: Upload signed AAB artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-${{ env.VERSION_NAME }}-aab
+          path: ${{ steps.aab.outputs.path }}
+          if-no-files-found: error
+          retention-days: 90
