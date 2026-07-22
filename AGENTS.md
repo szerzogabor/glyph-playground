@@ -52,8 +52,10 @@ On every push to `main`, `.github/workflows/ci.yml`:
 
 ## Project layout
 
-- `app/` — the application module (`namespace`/`applicationId`
-  `com.emberforge.generated.glyphplayground`).
+- `app/` — the application module. Code `namespace` is
+  `com.emberforge.generated.glyphplayground`; the published
+  `applicationId` (the APK/AAB package name) is
+  `com.ogbar.glyphplayground`.
   - `libs/glyph-matrix-sdk-2.0.aar` — Nothing Glyph Matrix SDK.
   - `src/main/java/com/emberforge/generated/glyphplayground/`
     - `MainActivity.kt` — single Compose Activity with Editor, Library,
