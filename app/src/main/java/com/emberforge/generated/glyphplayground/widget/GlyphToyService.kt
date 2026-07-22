@@ -2,6 +2,7 @@ package com.emberforge.generated.glyphplayground.widget
 
 import android.app.Service
 import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
 import android.os.Handler
 import android.os.IBinder
@@ -26,6 +27,14 @@ import com.nothing.ketchum.GlyphToy
  * service when the toy is active and delivers Glyph-button events over a
  * Messenger. Here we render the glyph the widget selected and let the Glyph
  * button toggle it on/off (tap) or cycle to the next saved glyph (long press).
+ *
+ * Besides the Glyph-button events, the widget and the in-app "Glyph" button
+ * also drive the matrix through this service via [show]/[hide] start commands.
+ * Riding on the Glyph system's own binding means no foreground service (and no
+ * FOREGROUND_SERVICE_SPECIAL_USE permission) is needed, with one trade-off:
+ * the commands only reach the hardware while this toy is the active one in the
+ * Glyph settings — otherwise the selection is stored and shows the next time
+ * the toy runs.
  */
 class GlyphToyService : Service() {
 
@@ -76,6 +85,36 @@ class GlyphToyService : Service() {
         return false
     }
 
+    /**
+     * Widget/in-app commands. Each command finishes synchronously, so the
+     * started state is released right away — the service stays alive only for
+     * as long as the Glyph system keeps it bound.
+     */
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        when (intent?.action) {
+            ACTION_SHOW -> {
+                // Re-read the selection the sender just wrote in its own process.
+                loadGlyphs()
+                isOn = true
+                val leds = intent.getIntArrayExtra(EXTRA_LEDS)?.toSet() ?: emptySet()
+                val bKeys = intent.getIntArrayExtra(EXTRA_BRIGHTNESS_KEYS)
+                val bVals = intent.getIntArrayExtra(EXTRA_BRIGHTNESS_VALS)
+                val brightness = if (bKeys != null && bVals != null && bKeys.size == bVals.size) {
+                    bKeys.zip(bVals).toMap()
+                } else {
+                    emptyMap()
+                }
+                renderFrame(leds, brightness)
+            }
+            ACTION_HIDE -> {
+                isOn = false
+                turnOff()
+            }
+        }
+        stopSelf(startId)
+        return START_NOT_STICKY
+    }
+
     private fun loadGlyphs() {
         glyphs = PatternRepository(this).loadAll()
         val activeId = WidgetPrefs.getActiveGlyphId(this)
@@ -114,14 +153,18 @@ class GlyphToyService : Service() {
     }
 
     private fun renderCurrent() {
+        val pattern = glyphs.getOrNull(index) ?: return
+        renderFrame(pattern.activeLeds, pattern.ledBrightness)
+    }
+
+    private fun renderFrame(activeLeds: Set<Int>, ledBrightness: Map<Int, Int>) {
         val mgr = gm ?: return
         if (!connected) return
-        val pattern = glyphs.getOrNull(index) ?: return
         try {
-            val colors = if (pattern.ledBrightness.isNotEmpty()) {
-                IntArray(GlyphLayout.TOTAL_LEDS) { pattern.ledBrightness.getOrDefault(it, 0) }
+            val colors = if (ledBrightness.isNotEmpty()) {
+                IntArray(GlyphLayout.TOTAL_LEDS) { ledBrightness.getOrDefault(it, 0) }
             } else {
-                IntArray(GlyphLayout.TOTAL_LEDS) { if (it in pattern.activeLeds) GlyphController.MAX_BRIGHTNESS else 0 }
+                IntArray(GlyphLayout.TOTAL_LEDS) { if (it in activeLeds) GlyphController.MAX_BRIGHTNESS else 0 }
             }
             mgr.setMatrixFrame(colors)
         } catch (e: Exception) {
@@ -139,5 +182,45 @@ class GlyphToyService : Service() {
 
     companion object {
         private const val TAG = "GlyphToyService"
+
+        private const val ACTION_SHOW = "com.emberforge.generated.glyphplayground.widget.SHOW"
+        private const val ACTION_HIDE = "com.emberforge.generated.glyphplayground.widget.HIDE"
+        private const val EXTRA_LEDS = "leds"
+        private const val EXTRA_BRIGHTNESS_KEYS = "brightness_keys"
+        private const val EXTRA_BRIGHTNESS_VALS = "brightness_vals"
+
+        /**
+         * Lights [leds] on the matrix, provided the toy is currently active.
+         * Callers are either foreground (MainActivity) or inside a widget-tap
+         * broadcast, both of which may start services; the catch covers any
+         * other background edge case rather than crashing the sender.
+         */
+        fun show(context: Context, leds: Set<Int>, ledBrightness: Map<Int, Int> = emptyMap()) {
+            val intent = Intent(context, GlyphToyService::class.java).apply {
+                action = ACTION_SHOW
+                putExtra(EXTRA_LEDS, leds.toIntArray())
+                if (ledBrightness.isNotEmpty()) {
+                    putExtra(EXTRA_BRIGHTNESS_KEYS, ledBrightness.keys.toIntArray())
+                    putExtra(EXTRA_BRIGHTNESS_VALS, ledBrightness.values.toIntArray())
+                }
+            }
+            try {
+                context.startService(intent)
+            } catch (e: Exception) {
+                Log.w(TAG, "Unable to deliver show command", e)
+            }
+        }
+
+        /** Clears the matrix, provided the toy is currently active. */
+        fun hide(context: Context) {
+            val intent = Intent(context, GlyphToyService::class.java).apply {
+                action = ACTION_HIDE
+            }
+            try {
+                context.startService(intent)
+            } catch (e: Exception) {
+                Log.w(TAG, "Unable to deliver hide command", e)
+            }
+        }
     }
 }
