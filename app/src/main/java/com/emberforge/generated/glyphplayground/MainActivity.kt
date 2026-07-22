@@ -76,7 +76,7 @@ import androidx.core.content.FileProvider
 import com.emberforge.generated.glyphplayground.ui.GlyphMatrixCanvas
 import com.emberforge.generated.glyphplayground.ui.GlyphMatrixPreview
 import com.emberforge.generated.glyphplayground.ui.PictureToGlyphScreen
-import com.emberforge.generated.glyphplayground.widget.GlyphWidgetDisplayService
+import com.emberforge.generated.glyphplayground.widget.GlyphToyService
 import com.emberforge.generated.glyphplayground.widget.GlyphWidgetProvider
 import java.io.File
 
@@ -511,11 +511,11 @@ private fun EditorScreen(
             Button(
                 onClick = {
                     if (glyphOn) {
-                        GlyphWidgetDisplayService.hide(context)
+                        GlyphToyService.hide(context)
                         glyphOn = false
                     } else {
                         if (activeLeds.isNotEmpty()) {
-                            GlyphWidgetDisplayService.show(context, activeLeds, ledBrightness)
+                            GlyphToyService.show(context, activeLeds, ledBrightness)
                             glyphOn = true
                         } else {
                             Toast.makeText(context, "Draw something first!", Toast.LENGTH_SHORT).show()
