@@ -30,11 +30,11 @@ import com.nothing.ketchum.GlyphToy
  *
  * Besides the Glyph-button events, the widget and the in-app "Glyph" button
  * also drive the matrix through this service via [show]/[hide] start commands.
- * Riding on the Glyph system's own binding means no foreground service (and no
- * FOREGROUND_SERVICE_SPECIAL_USE permission) is needed, with one trade-off:
- * the commands only reach the hardware while this toy is the active one in the
- * Glyph settings — otherwise the selection is stored and shows the next time
- * the toy runs.
+ * A show keeps the service in the started state, holding its own
+ * [GlyphMatrixManager] session, so the frame stays lit whether or not the
+ * Glyph system currently has the toy bound — no foreground service (and no
+ * FOREGROUND_SERVICE_SPECIAL_USE permission) needed. Hide (or the system
+ * reclaiming the process) releases the session and the matrix.
  */
 class GlyphToyService : Service() {
 
@@ -45,25 +45,35 @@ class GlyphToyService : Service() {
     private var index = 0
     private var isOn = true
 
-    private var pendingShow: Pair<Set<Int>, Map<Int, Int>>? = null
+    /**
+     * Frame requested via [ACTION_SHOW]. Kept for the whole started lifetime
+     * so it can be (re)rendered once the manager connects and survives a
+     * Glyph-system rebind. Cleared when the toy takes over or on [ACTION_HIDE].
+     */
+    private var shownFrame: Pair<Set<Int>, Map<Int, Int>>? = null
     private var pendingHide = false
-    private var pendingStartId = -1
 
     private val handler = object : Handler(Looper.getMainLooper()) {
         override fun handleMessage(msg: Message) {
             if (msg.what != GlyphToy.MSG_GLYPH_TOY) return
             when (msg.data?.getString(GlyphToy.MSG_GLYPH_TOY_DATA)) {
                 GlyphToy.STATUS_PREPARE, GlyphToy.STATUS_START -> {
+                    shownFrame = null
                     isOn = true
                     renderCurrent()
                 }
-                GlyphToy.STATUS_END -> turnOff()
+                GlyphToy.STATUS_END -> {
+                    shownFrame = null
+                    turnOff()
+                }
                 GlyphToy.EVENT_CHANGE -> {
+                    shownFrame = null
                     advance()
                     isOn = true
                     renderCurrent()
                 }
                 GlyphToy.EVENT_ACTION_DOWN -> {
+                    shownFrame = null
                     isOn = !isOn
                     if (isOn) renderCurrent() else turnOff()
                 }
@@ -83,7 +93,9 @@ class GlyphToyService : Service() {
     }
 
     override fun onUnbind(intent: Intent?): Boolean {
-        turnOff()
+        // Only clear the matrix if the toy owned it; a frame shown via
+        // ACTION_SHOW should survive the Glyph system dropping the binding.
+        if (shownFrame == null) turnOff()
         return false
     }
 
@@ -98,11 +110,21 @@ class GlyphToyService : Service() {
         super.onDestroy()
     }
 
+    /**
+     * Show keeps the service in the started state on purpose: the started
+     * service holds the [GlyphMatrixManager] session open, which is what keeps
+     * the frame lit when the Glyph system hasn't bound the toy. Stopping right
+     * after rendering (the previous behaviour) destroyed the service, whose
+     * cleanup turned the matrix straight back off — the in-app Glyph button
+     * appeared dead unless the toy happened to be active. Hide releases the
+     * started state again.
+     */
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             ACTION_SHOW -> {
                 loadGlyphs()
                 isOn = true
+                pendingHide = false
                 val leds = intent.getIntArrayExtra(EXTRA_LEDS)?.toSet() ?: emptySet()
                 val bKeys = intent.getIntArrayExtra(EXTRA_BRIGHTNESS_KEYS)
                 val bVals = intent.getIntArrayExtra(EXTRA_BRIGHTNESS_VALS)
@@ -111,24 +133,17 @@ class GlyphToyService : Service() {
                 } else {
                     emptyMap()
                 }
-                if (connected) {
-                    renderFrame(leds, brightness)
-                    stopSelf(startId)
-                } else {
-                    pendingShow = leds to brightness
-                    pendingHide = false
-                    pendingStartId = startId
-                }
+                shownFrame = leds to brightness
+                if (connected) renderFrame(leds, brightness)
             }
             ACTION_HIDE -> {
                 isOn = false
+                shownFrame = null
                 if (connected) {
                     turnOff()
-                    stopSelf(startId)
+                    stopSelf()
                 } else {
                     pendingHide = true
-                    pendingShow = null
-                    pendingStartId = startId
                 }
             }
             else -> stopSelf(startId)
@@ -151,15 +166,13 @@ class GlyphToyService : Service() {
                     try {
                         gm?.register(Glyph.DEVICE_23112)
                         connected = true
-                        val show = pendingShow
-                        if (show != null) {
-                            renderFrame(show.first, show.second)
-                            pendingShow = null
-                            releasePendingStart()
-                        } else if (pendingHide) {
+                        val show = shownFrame
+                        if (pendingHide) {
                             turnOff()
                             pendingHide = false
-                            releasePendingStart()
+                            stopSelf()
+                        } else if (show != null) {
+                            renderFrame(show.first, show.second)
                         } else if (isOn) {
                             renderCurrent()
                         }
@@ -174,13 +187,6 @@ class GlyphToyService : Service() {
             })
         } catch (e: Exception) {
             Log.w(TAG, "Glyph SDK not available", e)
-        }
-    }
-
-    private fun releasePendingStart() {
-        if (pendingStartId >= 0) {
-            stopSelf(pendingStartId)
-            pendingStartId = -1
         }
     }
 
@@ -230,7 +236,7 @@ class GlyphToyService : Service() {
         private const val EXTRA_BRIGHTNESS_VALS = "brightness_vals"
 
         /**
-         * Lights [leds] on the matrix, provided the toy is currently active.
+         * Lights [leds] on the matrix and keeps them lit until [hide].
          * Callers are either foreground (MainActivity) or inside a widget-tap
          * broadcast, both of which may start services; the catch covers any
          * other background edge case rather than crashing the sender.
@@ -251,7 +257,7 @@ class GlyphToyService : Service() {
             }
         }
 
-        /** Clears the matrix, provided the toy is currently active. */
+        /** Clears the matrix and releases the started service. */
         fun hide(context: Context) {
             val intent = Intent(context, GlyphToyService::class.java).apply {
                 action = ACTION_HIDE
