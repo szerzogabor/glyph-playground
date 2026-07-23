@@ -1,11 +1,14 @@
-name: Release AAB (manual)
+name: Release AAB
 
-# Manually-triggered build of a signed Android App Bundle (.aab).
-# Unlike ci.yml (which builds an APK and cuts a GitHub Release on every
-# push to main), this workflow is run on demand from a chosen branch —
-# typically the release branch — and publishes the .aab as a downloadable
-# workflow artifact rather than a GitHub Release.
+# Builds a signed Android App Bundle (.aab) and publishes it as a
+# downloadable workflow artifact (not a GitHub Release, unlike ci.yml
+# which builds an APK on every push to main).
+#
+# Runs automatically on every push (commit) to the release branch, and
+# can also be triggered manually from any branch via the Actions tab.
 on:
+  push:
+    branches: [release]
   workflow_dispatch:
     inputs:
       ref:
