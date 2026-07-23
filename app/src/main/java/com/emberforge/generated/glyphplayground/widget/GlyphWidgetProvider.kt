@@ -63,19 +63,17 @@ class GlyphWidgetProvider : AppWidgetProvider() {
     /**
      * Toggles the tapped glyph on the physical Glyph Matrix. Tapping the active
      * glyph clears it; tapping another switches to it. Display goes through
-     * [GlyphWidgetDisplayService], which uses the same background-capable
-     * `setMatrixFrame` path the Glyph Toy uses. The selection is also stored so
-     * the "Glyph Playground" toy shows the same glyph when triggered by the
-     * Glyph button.
+     * [GlyphToyService]: the started service holds a Glyph session and keeps
+     * the frame lit until the matching hide — no foreground service needed.
      */
     private fun handleToggle(context: Context, glyphId: String) {
         val pattern = PatternRepository(context).loadAll().find { it.id == glyphId } ?: return
         if (WidgetPrefs.getActiveGlyphId(context) == glyphId) {
             WidgetPrefs.setActiveGlyphId(context, null)
-            GlyphWidgetDisplayService.hide(context)
+            GlyphToyService.hide(context)
         } else {
             WidgetPrefs.setActiveGlyphId(context, glyphId)
-            GlyphWidgetDisplayService.show(context, pattern.activeLeds, pattern.ledBrightness)
+            GlyphToyService.show(context, pattern.activeLeds, pattern.ledBrightness)
         }
         refreshAll(context)
     }

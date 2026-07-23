@@ -1,0 +1,318 @@
+{
+  "communities": {
+    "0": [
+      "android",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_glyphpattern",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_glyphpattern_fromimportjson",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_glyphpattern_glyphpattern",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_glyphpattern_glyphpattern_brightnessof",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_glyphpattern_parsebrightnessjson",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_glyphpattern_parsejson",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_glyphpattern_patternrepository",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_glyphpattern_patternrepository_allids",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_glyphpattern_patternrepository_delete",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_glyphpattern_patternrepository_load",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_glyphpattern_patternrepository_loadall",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_glyphpattern_patternrepository_save",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_glyphpattern_toexportjson",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_mainactivity",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_mainactivity_editorscreen",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_mainactivity_glyphplaygroundapp",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_mainactivity_libraryscreen",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_mainactivity_openbuymeacoffee",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_mainactivity_patterncard",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_mainactivity_presetchip",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_mainactivity_presetrow",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_mainactivity_savedialog",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_mainactivity_shareglyph",
+      "jsonobject"
+    ],
+    "1": [
+      "app_src_main_java_com_emberforge_generated_glyphplayground_widget_glyphtoyservice",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_widget_glyphtoyservice_glyphtoyservice",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_widget_glyphtoyservice_glyphtoyservice_advance",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_widget_glyphtoyservice_glyphtoyservice_initmanager",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_widget_glyphtoyservice_glyphtoyservice_loadglyphs",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_widget_glyphtoyservice_glyphtoyservice_onbind",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_widget_glyphtoyservice_glyphtoyservice_onstartcommand",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_widget_glyphtoyservice_glyphtoyservice_onunbind",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_widget_glyphtoyservice_glyphtoyservice_rendercurrent",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_widget_glyphtoyservice_glyphtoyservice_renderframe",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_widget_glyphtoyservice_glyphtoyservice_turnoff",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_widget_glyphtoyservice_hide",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_widget_glyphtoyservice_kt_context",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_widget_glyphtoyservice_kt_glyphmatrixmanager",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_widget_glyphtoyservice_kt_intent",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_widget_glyphtoyservice_show",
+      "ibinder",
+      "service"
+    ],
+    "2": [
+      "app_src_main_java_com_emberforge_generated_glyphplayground_widget_glyphwidgetprovider",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_widget_glyphwidgetprovider_broadcast",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_widget_glyphwidgetprovider_glyphwidgetprovider",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_widget_glyphwidgetprovider_glyphwidgetprovider_handletoggle",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_widget_glyphwidgetprovider_glyphwidgetprovider_ondeleted",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_widget_glyphwidgetprovider_glyphwidgetprovider_onreceive",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_widget_glyphwidgetprovider_glyphwidgetprovider_onupdate",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_widget_glyphwidgetprovider_kt_context",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_widget_glyphwidgetprovider_kt_intent",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_widget_glyphwidgetprovider_refreshall",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_widget_glyphwidgetprovider_renderwidget",
+      "appwidgetmanager",
+      "appwidgetprovider",
+      "intarray",
+      "pendingintent"
+    ],
+    "3": [
+      "app_src_main_java_com_emberforge_generated_glyphplayground_glyphcontroller",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_glyphcontroller_glyphcontroller",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_glyphcontroller_glyphcontroller_clear",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_glyphcontroller_glyphcontroller_destroy",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_glyphcontroller_glyphcontroller_displaypattern",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_glyphcontroller_glyphcontroller_init",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_glyphcontroller_kt_glyphmatrixmanager",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_mainactivity_kt_bundle",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_mainactivity_kt_componentactivity",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_mainactivity_mainactivity",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_mainactivity_mainactivity_oncreate",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_mainactivity_mainactivity_ondestroy"
+    ],
+    "4": [
+      "app_src_main_java_com_emberforge_generated_glyphplayground_widget_widgetprefs",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_widget_widgetprefs_kt_context",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_widget_widgetprefs_widgetprefs",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_widget_widgetprefs_widgetprefs_clearwidget",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_widget_widgetprefs_widgetprefs_getactiveglyphid",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_widget_widgetprefs_widgetprefs_getcurrentindex",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_widget_widgetprefs_widgetprefs_getselected",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_widget_widgetprefs_widgetprefs_prefs",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_widget_widgetprefs_widgetprefs_setactiveglyphid",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_widget_widgetprefs_widgetprefs_setcurrentindex",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_widget_widgetprefs_widgetprefs_setselected"
+    ],
+    "5": [
+      "app_src_main_java_com_emberforge_generated_glyphplayground_imagetoglyph",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_imagetoglyph_cellgrid",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_imagetoglyph_imagetoglyph",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_imagetoglyph_imagetoglyph_convert",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_imagetoglyph_imagetoglyph_convertwithbrightness",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_imagetoglyph_imagetoglyph_normalizecontrast",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_imagetoglyph_imagetoglyph_renderworkbitmap",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_imagetoglyph_imagetoglyph_samplecells",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_imagetoglyph_kt_bitmap",
+      "floatarray"
+    ],
+    "6": [
+      "app_src_main_java_com_emberforge_generated_glyphplayground_ui_glyphmatrixcanvas",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_ui_glyphmatrixcanvas_drawgrid",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_ui_glyphmatrixcanvas_drawgridat",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_ui_glyphmatrixcanvas_glyphmatrixcanvas",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_ui_glyphmatrixcanvas_glyphmatrixpreview",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_ui_glyphmatrixcanvas_hitindex",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_ui_picturetoglyphscreen",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_ui_picturetoglyphscreen_picturetoglyphscreen",
+      "modifier",
+      "offset"
+    ],
+    "7": [
+      "app_src_main_java_com_emberforge_generated_glyphplayground_widget_glyphwidgetconfigactivity",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_widget_glyphwidgetconfigactivity_configrow",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_widget_glyphwidgetconfigactivity_configscreen",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_widget_glyphwidgetconfigactivity_glyphwidgetconfigactivity",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_widget_glyphwidgetconfigactivity_glyphwidgetconfigactivity_oncreate",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_widget_glyphwidgetconfigactivity_kt_bundle",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_widget_glyphwidgetconfigactivity_kt_componentactivity"
+    ],
+    "8": [
+      "app_src_main_java_com_emberforge_generated_glyphplayground_glyphlayout",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_glyphlayout_glyphlayout",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_glyphlayout_glyphlayout_colof",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_glyphlayout_glyphlayout_indexof",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_glyphlayout_glyphlayout_isinsidecircle",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_glyphlayout_glyphlayout_rowof"
+    ],
+    "9": [
+      "app_src_main_java_com_emberforge_generated_glyphplayground_widget_glyphbitmaprenderer",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_widget_glyphbitmaprenderer_glyphbitmaprenderer",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_widget_glyphbitmaprenderer_glyphbitmaprenderer_lerp",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_widget_glyphbitmaprenderer_glyphbitmaprenderer_lerpcolor",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_widget_glyphbitmaprenderer_glyphbitmaprenderer_render",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_widget_glyphbitmaprenderer_kt_bitmap"
+    ],
+    "10": [
+      "app_src_main_java_com_emberforge_generated_glyphplayground_mainactivity_screen",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_mainactivity_screen_editor",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_mainactivity_screen_library",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_mainactivity_screen_picture_to_glyph"
+    ],
+    "11": [
+      "app_src_main_java_com_emberforge_generated_glyphplayground_predefinedglyphs",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_predefinedglyphs_predefinedglyph",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_predefinedglyphs_predefinedglyphs",
+      "app_src_main_java_com_emberforge_generated_glyphplayground_predefinedglyphs_predefinedglyphs_fromrows"
+    ],
+    "12": [
+      "app_build_gradle"
+    ],
+    "13": [
+      "build_gradle"
+    ],
+    "14": [
+      "settings_gradle"
+    ]
+  },
+  "cohesion": {
+    "0": 0.18333333333333332,
+    "1": 0.1895424836601307,
+    "2": 0.2857142857142857,
+    "3": 0.18181818181818182,
+    "4": 0.43636363636363634,
+    "5": 0.4,
+    "6": 0.35555555555555557,
+    "7": 0.38095238095238093,
+    "8": 0.3333333333333333,
+    "9": 0.4666666666666667,
+    "10": 0.5,
+    "11": 0.6666666666666666,
+    "12": 1.0,
+    "13": 1.0,
+    "14": 1.0
+  },
+  "gods": [
+    {
+      "id": "app_src_main_java_com_emberforge_generated_glyphplayground_glyphpattern_glyphpattern",
+      "label": "GlyphPattern",
+      "degree": 16
+    },
+    {
+      "id": "app_src_main_java_com_emberforge_generated_glyphplayground_glyphpattern_patternrepository",
+      "label": "PatternRepository",
+      "degree": 13
+    },
+    {
+      "id": "app_src_main_java_com_emberforge_generated_glyphplayground_widget_glyphtoyservice_glyphtoyservice",
+      "label": "GlyphToyService",
+      "degree": 13
+    },
+    {
+      "id": "app_src_main_java_com_emberforge_generated_glyphplayground_glyphcontroller_glyphcontroller",
+      "label": "GlyphController",
+      "degree": 10
+    },
+    {
+      "id": "app_src_main_java_com_emberforge_generated_glyphplayground_mainactivity_glyphplaygroundapp",
+      "label": "GlyphPlaygroundApp()",
+      "degree": 9
+    },
+    {
+      "id": "app_src_main_java_com_emberforge_generated_glyphplayground_mainactivity_editorscreen",
+      "label": "EditorScreen()",
+      "degree": 9
+    },
+    {
+      "id": "app_src_main_java_com_emberforge_generated_glyphplayground_widget_glyphwidgetprovider_renderwidget",
+      "label": "renderWidget()",
+      "degree": 9
+    },
+    {
+      "id": "app_src_main_java_com_emberforge_generated_glyphplayground_widget_widgetprefs_widgetprefs",
+      "label": "WidgetPrefs",
+      "degree": 9
+    },
+    {
+      "id": "app_src_main_java_com_emberforge_generated_glyphplayground_imagetoglyph_imagetoglyph",
+      "label": "ImageToGlyph",
+      "degree": 7
+    },
+    {
+      "id": "app_src_main_java_com_emberforge_generated_glyphplayground_ui_glyphmatrixcanvas_glyphmatrixpreview",
+      "label": "GlyphMatrixPreview()",
+      "degree": 7
+    }
+  ],
+  "surprises": [
+    {
+      "source": "renderWidget()",
+      "target": "PatternRepository",
+      "source_files": [
+        "app/src/main/java/com/emberforge/generated/glyphplayground/widget/GlyphWidgetProvider.kt",
+        "app/src/main/java/com/emberforge/generated/glyphplayground/GlyphPattern.kt"
+      ],
+      "confidence": "INFERRED",
+      "relation": "calls",
+      "why": "inferred connection - not explicitly stated in source; bridges separate communities"
+    },
+    {
+      "source": "GlyphPlaygroundApp()",
+      "target": "PictureToGlyphScreen()",
+      "source_files": [
+        "app/src/main/java/com/emberforge/generated/glyphplayground/MainActivity.kt",
+        "app/src/main/java/com/emberforge/generated/glyphplayground/ui/PictureToGlyphScreen.kt"
+      ],
+      "confidence": "INFERRED",
+      "relation": "calls",
+      "why": "inferred connection - not explicitly stated in source; bridges separate communities"
+    },
+    {
+      "source": "EditorScreen()",
+      "target": "GlyphMatrixCanvas()",
+      "source_files": [
+        "app/src/main/java/com/emberforge/generated/glyphplayground/MainActivity.kt",
+        "app/src/main/java/com/emberforge/generated/glyphplayground/ui/GlyphMatrixCanvas.kt"
+      ],
+      "confidence": "INFERRED",
+      "relation": "calls",
+      "why": "inferred connection - not explicitly stated in source; bridges separate communities"
+    },
+    {
+      "source": "PresetChip()",
+      "target": "GlyphMatrixPreview()",
+      "source_files": [
+        "app/src/main/java/com/emberforge/generated/glyphplayground/MainActivity.kt",
+        "app/src/main/java/com/emberforge/generated/glyphplayground/ui/GlyphMatrixCanvas.kt"
+      ],
+      "confidence": "INFERRED",
+      "relation": "calls",
+      "why": "inferred connection - not explicitly stated in source; bridges separate communities"
+    },
+    {
+      "source": "PatternCard()",
+      "target": "GlyphMatrixPreview()",
+      "source_files": [
+        "app/src/main/java/com/emberforge/generated/glyphplayground/MainActivity.kt",
+        "app/src/main/java/com/emberforge/generated/glyphplayground/ui/GlyphMatrixCanvas.kt"
+      ],
+      "confidence": "INFERRED",
+      "relation": "calls",
+      "why": "inferred connection - not explicitly stated in source; bridges separate communities"
+    }
+  ],
+  "questions": [
+    {
+      "type": "bridge_node",
+      "question": "Why does `PatternRepository` connect `Community 0` to `Community 1`, `Community 2`, `Community 3`, `Community 7`?",
+      "why": "High betweenness centrality (0.207) - this node is a cross-community bridge."
+    },
+    {
+      "type": "bridge_node",
+      "question": "Why does `GlyphPattern` connect `Community 0` to `Community 1`, `Community 7`?",
+      "why": "High betweenness centrality (0.203) - this node is a cross-community bridge."
+    },
+    {
+      "type": "bridge_node",
+      "question": "Why does `GlyphToyService` connect `Community 1` to `Community 0`?",
+      "why": "High betweenness centrality (0.173) - this node is a cross-community bridge."
+    },
+    {
+      "type": "verify_inferred",
+      "question": "Are the 4 inferred relationships involving `PatternRepository` (e.g. with `.loadGlyphs()` and `.onCreate()`) actually correct?",
+      "why": "`PatternRepository` has 4 INFERRED edges - model-reasoned connections that need verification."
+    },
+    {
+      "type": "isolated_nodes",
+      "question": "What connects `EDITOR`, `LIBRARY`, `PICTURE_TO_GLYPH` to the rest of the system?",
+      "why": "3 weakly-connected nodes found - possible documentation gaps or missing edges."
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+# Graphify ignore patterns (gitignore syntax; merged with .gitignore)
+build/
+.gradle/
+keystore/
+*.aar
+*.keystore
+graphify-out/
+.codex/

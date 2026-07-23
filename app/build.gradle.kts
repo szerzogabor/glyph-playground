@@ -14,7 +14,7 @@ android {
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.emberforge.generated.glyphplayground"
+        applicationId = "com.ogbar.glyphplayground"
         minSdk = 33
         targetSdk = 35
         versionCode = ciVersionCode

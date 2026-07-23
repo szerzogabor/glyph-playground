@@ -76,7 +76,7 @@ import androidx.core.content.FileProvider
 import com.emberforge.generated.glyphplayground.ui.GlyphMatrixCanvas
 import com.emberforge.generated.glyphplayground.ui.GlyphMatrixPreview
 import com.emberforge.generated.glyphplayground.ui.PictureToGlyphScreen
-import com.emberforge.generated.glyphplayground.widget.GlyphWidgetDisplayService
+import com.emberforge.generated.glyphplayground.widget.GlyphToyService
 import com.emberforge.generated.glyphplayground.widget.GlyphWidgetProvider
 import java.io.File
 
@@ -147,6 +147,7 @@ private enum class Screen { EDITOR, LIBRARY, PICTURE_TO_GLYPH }
 @Composable
 private fun GlyphPlaygroundApp(repo: PatternRepository) {
     var screen by remember { mutableStateOf(Screen.EDITOR) }
+    var glyphOn by remember { mutableStateOf(false) }
     var activeLeds by remember { mutableStateOf(setOf<Int>()) }
     var ledBrightness by remember { mutableStateOf(mapOf<Int, Int>()) }
     var patterns by remember { mutableStateOf(repo.loadAll()) }
@@ -207,6 +208,8 @@ private fun GlyphPlaygroundApp(repo: PatternRepository) {
             Screen.EDITOR -> EditorScreen(
                 activeLeds = activeLeds,
                 ledBrightness = ledBrightness,
+                glyphOn = glyphOn,
+                onGlyphOnChanged = { glyphOn = it },
                 onLedsChanged = { leds ->
                     activeLeds = leds
                     ledBrightness = emptyMap()
@@ -270,6 +273,8 @@ private fun GlyphPlaygroundApp(repo: PatternRepository) {
 private fun EditorScreen(
     activeLeds: Set<Int>,
     ledBrightness: Map<Int, Int>,
+    glyphOn: Boolean,
+    onGlyphOnChanged: (Boolean) -> Unit,
     onLedsChanged: (Set<Int>) -> Unit,
     onOpenLibrary: () -> Unit,
     onOpenPictureToGlyph: () -> Unit,
@@ -280,7 +285,6 @@ private fun EditorScreen(
     onShare: (Set<Int>) -> Unit
 ) {
     var showSaveDialog by remember { mutableStateOf(false) }
-    var glyphOn by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val statusBarPadding = WindowInsets.statusBars.asPaddingValues()
 
@@ -511,12 +515,12 @@ private fun EditorScreen(
             Button(
                 onClick = {
                     if (glyphOn) {
-                        GlyphWidgetDisplayService.hide(context)
-                        glyphOn = false
+                        GlyphToyService.hide(context)
+                        onGlyphOnChanged(false)
                     } else {
                         if (activeLeds.isNotEmpty()) {
-                            GlyphWidgetDisplayService.show(context, activeLeds, ledBrightness)
-                            glyphOn = true
+                            GlyphToyService.show(context, activeLeds, ledBrightness)
+                            onGlyphOnChanged(true)
                         } else {
                             Toast.makeText(context, "Draw something first!", Toast.LENGTH_SHORT).show()
                         }
