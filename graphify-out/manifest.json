@@ -1,0 +1,152 @@
+{
+  "app/build.gradle.kts": {
+    "mtime": 1784796656.0670176,
+    "ast_hash": "55c54dbf0c72288fc521589f7828bef4",
+    "semantic_hash": "55c54dbf0c72288fc521589f7828bef4"
+  },
+  "app/src/main/java/com/emberforge/generated/glyphplayground/GlyphController.kt": {
+    "mtime": 1784796656.0670176,
+    "ast_hash": "d31a121a365cf9a15e5d6576adc36b8f",
+    "semantic_hash": "d31a121a365cf9a15e5d6576adc36b8f"
+  },
+  "app/src/main/java/com/emberforge/generated/glyphplayground/GlyphLayout.kt": {
+    "mtime": 1784279745.294355,
+    "ast_hash": "905850b7202e31f4123b1e5b1f1e93e0",
+    "semantic_hash": "905850b7202e31f4123b1e5b1f1e93e0"
+  },
+  "app/src/main/java/com/emberforge/generated/glyphplayground/GlyphPattern.kt": {
+    "mtime": 1784796656.0670176,
+    "ast_hash": "85dc87769df89f67260ab447b2fb96da",
+    "semantic_hash": "85dc87769df89f67260ab447b2fb96da"
+  },
+  "app/src/main/java/com/emberforge/generated/glyphplayground/ImageToGlyph.kt": {
+    "mtime": 1784796656.0670176,
+    "ast_hash": "79b79efdf84d3a8447128ace8a2d009a",
+    "semantic_hash": "79b79efdf84d3a8447128ace8a2d009a"
+  },
+  "app/src/main/java/com/emberforge/generated/glyphplayground/MainActivity.kt": {
+    "mtime": 1784796656.0670176,
+    "ast_hash": "085cc0100bd62b7dd1c0b33c77375de9",
+    "semantic_hash": "085cc0100bd62b7dd1c0b33c77375de9"
+  },
+  "app/src/main/java/com/emberforge/generated/glyphplayground/PredefinedGlyphs.kt": {
+    "mtime": 1784796656.0670176,
+    "ast_hash": "393480d1d739453f58ed58e8a21c430e",
+    "semantic_hash": "393480d1d739453f58ed58e8a21c430e"
+  },
+  "app/src/main/java/com/emberforge/generated/glyphplayground/ui/GlyphMatrixCanvas.kt": {
+    "mtime": 1784796656.0670176,
+    "ast_hash": "80119ae8facf6f8a9c18d47a5e6b8a8c",
+    "semantic_hash": "80119ae8facf6f8a9c18d47a5e6b8a8c"
+  },
+  "app/src/main/java/com/emberforge/generated/glyphplayground/ui/PictureToGlyphScreen.kt": {
+    "mtime": 1784796656.0670176,
+    "ast_hash": "091370ece585667018a0cd5144936e4e",
+    "semantic_hash": "091370ece585667018a0cd5144936e4e"
+  },
+  "app/src/main/java/com/emberforge/generated/glyphplayground/widget/GlyphBitmapRenderer.kt": {
+    "mtime": 1784796656.0735543,
+    "ast_hash": "82faf1e1623e8cce692f59ee1dad885f",
+    "semantic_hash": "82faf1e1623e8cce692f59ee1dad885f"
+  },
+  "app/src/main/java/com/emberforge/generated/glyphplayground/widget/GlyphToyService.kt": {
+    "mtime": 1784796656.0735543,
+    "ast_hash": "d58940b535f32e338866eab1d7338cfe",
+    "semantic_hash": "d58940b535f32e338866eab1d7338cfe"
+  },
+  "app/src/main/java/com/emberforge/generated/glyphplayground/widget/GlyphWidgetConfigActivity.kt": {
+    "mtime": 1784796656.0735543,
+    "ast_hash": "c1ad9bc95538a2cb9c47585abbe2466f",
+    "semantic_hash": "c1ad9bc95538a2cb9c47585abbe2466f"
+  },
+  "app/src/main/java/com/emberforge/generated/glyphplayground/widget/GlyphWidgetProvider.kt": {
+    "mtime": 1784796656.0735543,
+    "ast_hash": "8bd1e1547d60db07994de38c6e59db16",
+    "semantic_hash": "8bd1e1547d60db07994de38c6e59db16"
+  },
+  "app/src/main/java/com/emberforge/generated/glyphplayground/widget/WidgetPrefs.kt": {
+    "mtime": 1784279745.2959757,
+    "ast_hash": "54897bd33de00f54888bc82505b5a5af",
+    "semantic_hash": "54897bd33de00f54888bc82505b5a5af"
+  },
+  "build.gradle.kts": {
+    "mtime": 1784796811.9590268,
+    "ast_hash": "9f18dabd261ff282aa4c3305556fa101",
+    "semantic_hash": ""
+  },
+  "settings.gradle.kts": {
+    "mtime": 1784279745.302082,
+    "ast_hash": "d4daaddc8894362ea19b19c1c953c702",
+    "semantic_hash": "d4daaddc8894362ea19b19c1c953c702"
+  },
+  ".github/workflows/ci.yml": {
+    "mtime": 1784796656.0670176,
+    "ast_hash": "6b94470caff5181d3c3f12ef22471815",
+    "semantic_hash": ""
+  },
+  ".github/workflows/release-aab.yml": {
+    "mtime": 1784796656.0670176,
+    "ast_hash": "1dd1293c037840e59718bb8d6fd719ab",
+    "semantic_hash": ""
+  },
+  "AGENTS.md": {
+    "mtime": 1784796782.030015,
+    "ast_hash": "c2871ef955cffabb3bf5ca922313e46e",
+    "semantic_hash": ""
+  },
+  "README.md": {
+    "mtime": 1784796828.4950278,
+    "ast_hash": "aa40189df3af1cc887dfeb772e37058d",
+    "semantic_hash": ""
+  },
+  "app/src/main/res/mipmap-hdpi/ic_launcher.png": {
+    "mtime": 1784279745.29917,
+    "ast_hash": "92db6eddb824931205256b01ca308062",
+    "semantic_hash": ""
+  },
+  "app/src/main/res/mipmap-hdpi/ic_launcher_round.png": {
+    "mtime": 1784279745.2997413,
+    "ast_hash": "36dcc3137981a6d43ece038cbc2a82c0",
+    "semantic_hash": ""
+  },
+  "app/src/main/res/mipmap-mdpi/ic_launcher.png": {
+    "mtime": 1784279745.2997413,
+    "ast_hash": "39dec27a7ced4de0104fa140f2d1717c",
+    "semantic_hash": ""
+  },
+  "app/src/main/res/mipmap-mdpi/ic_launcher_round.png": {
+    "mtime": 1784279745.3001523,
+    "ast_hash": "ae62fde5b80dfb9d0b451ed7e1a4c939",
+    "semantic_hash": ""
+  },
+  "app/src/main/res/mipmap-xhdpi/ic_launcher.png": {
+    "mtime": 1784279745.3001523,
+    "ast_hash": "f4f8ee756327d81e9a752a45eb55bb53",
+    "semantic_hash": ""
+  },
+  "app/src/main/res/mipmap-xhdpi/ic_launcher_round.png": {
+    "mtime": 1784279745.3004756,
+    "ast_hash": "f51a85adc7138aa1717e103257a7a80b",
+    "semantic_hash": ""
+  },
+  "app/src/main/res/mipmap-xxhdpi/ic_launcher.png": {
+    "mtime": 1784279745.3004756,
+    "ast_hash": "435615d20612001e91db60bd9271bc79",
+    "semantic_hash": ""
+  },
+  "app/src/main/res/mipmap-xxhdpi/ic_launcher_round.png": {
+    "mtime": 1784279745.3009236,
+    "ast_hash": "1fee99d25313bfd34e215b81f2ea8f7a",
+    "semantic_hash": ""
+  },
+  "app/src/main/res/mipmap-xxxhdpi/ic_launcher.png": {
+    "mtime": 1784279745.3009236,
+    "ast_hash": "0782dd7baeb8392953a76a10ab8492ae",
+    "semantic_hash": ""
+  },
+  "app/src/main/res/mipmap-xxxhdpi/ic_launcher_round.png": {
+    "mtime": 1784279745.3015141,
+    "ast_hash": "9ef8a0ee1b15a6894fb06f96dee99d8a",
+    "semantic_hash": ""
+  }
+}
