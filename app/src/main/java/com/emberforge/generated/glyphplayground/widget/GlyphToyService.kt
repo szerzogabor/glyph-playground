@@ -45,6 +45,10 @@ class GlyphToyService : Service() {
     private var index = 0
     private var isOn = true
 
+    private var pendingShow: Pair<Set<Int>, Map<Int, Int>>? = null
+    private var pendingHide = false
+    private var pendingStartId = -1
+
     private val handler = object : Handler(Looper.getMainLooper()) {
         override fun handleMessage(msg: Message) {
             if (msg.what != GlyphToy.MSG_GLYPH_TOY) return
@@ -68,13 +72,22 @@ class GlyphToyService : Service() {
     }
     private val messenger = Messenger(handler)
 
+    override fun onCreate() {
+        super.onCreate()
+        initManager()
+    }
+
     override fun onBind(intent: Intent?): IBinder {
         loadGlyphs()
-        initManager()
         return messenger.binder
     }
 
     override fun onUnbind(intent: Intent?): Boolean {
+        turnOff()
+        return false
+    }
+
+    override fun onDestroy() {
         try {
             gm?.turnOff()
             gm?.unInit()
@@ -82,18 +95,12 @@ class GlyphToyService : Service() {
         }
         gm = null
         connected = false
-        return false
+        super.onDestroy()
     }
 
-    /**
-     * Widget/in-app commands. Each command finishes synchronously, so the
-     * started state is released right away — the service stays alive only for
-     * as long as the Glyph system keeps it bound.
-     */
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             ACTION_SHOW -> {
-                // Re-read the selection the sender just wrote in its own process.
                 loadGlyphs()
                 isOn = true
                 val leds = intent.getIntArrayExtra(EXTRA_LEDS)?.toSet() ?: emptySet()
@@ -104,14 +111,28 @@ class GlyphToyService : Service() {
                 } else {
                     emptyMap()
                 }
-                renderFrame(leds, brightness)
+                if (connected) {
+                    renderFrame(leds, brightness)
+                    stopSelf(startId)
+                } else {
+                    pendingShow = leds to brightness
+                    pendingHide = false
+                    pendingStartId = startId
+                }
             }
             ACTION_HIDE -> {
                 isOn = false
-                turnOff()
+                if (connected) {
+                    turnOff()
+                    stopSelf(startId)
+                } else {
+                    pendingHide = true
+                    pendingShow = null
+                    pendingStartId = startId
+                }
             }
+            else -> stopSelf(startId)
         }
-        stopSelf(startId)
         return START_NOT_STICKY
     }
 
@@ -122,6 +143,7 @@ class GlyphToyService : Service() {
     }
 
     private fun initManager() {
+        if (gm != null) return
         try {
             gm = GlyphMatrixManager.getInstance(applicationContext)
             gm?.init(object : GlyphMatrixManager.Callback {
@@ -129,7 +151,18 @@ class GlyphToyService : Service() {
                     try {
                         gm?.register(Glyph.DEVICE_23112)
                         connected = true
-                        if (isOn) renderCurrent()
+                        val show = pendingShow
+                        if (show != null) {
+                            renderFrame(show.first, show.second)
+                            pendingShow = null
+                            releasePendingStart()
+                        } else if (pendingHide) {
+                            turnOff()
+                            pendingHide = false
+                            releasePendingStart()
+                        } else if (isOn) {
+                            renderCurrent()
+                        }
                     } catch (e: Exception) {
                         Log.w(TAG, "Failed to register device", e)
                     }
@@ -141,6 +174,13 @@ class GlyphToyService : Service() {
             })
         } catch (e: Exception) {
             Log.w(TAG, "Glyph SDK not available", e)
+        }
+    }
+
+    private fun releasePendingStart() {
+        if (pendingStartId >= 0) {
+            stopSelf(pendingStartId)
+            pendingStartId = -1
         }
     }
 
