@@ -41,6 +41,11 @@ On every push to `main`, `.github/workflows/ci.yml`:
 `versionCode` is `github.run_number`; `versionName` is
 `1.0.<run_number>`.
 
+On every pull request against `main`, `.github/workflows/pr-build.yml`
+runs the same `gradle assembleRelease` and publishes nothing — it exists
+so a broken build (especially a toolchain bump) fails on the PR instead
+of on `main`, where a failure also costs that run's release APK.
+
 ## Ground rules
 
 - **Do not touch `keystore/`.** CI generates this project's own
@@ -49,6 +54,13 @@ On every push to `main`, `.github/workflows/ci.yml`:
   longer update in place.
 - The app is signed with a committed debug keystore on purpose — this is
   a demo distribution channel, not a Play Store release.
+- **Keep `targetSdk` at the newest stable API level.** Google Play
+  enforces a target API level floor every year (API 36 / Android 16 from
+  Aug 31, 2026), and an app below it can no longer be updated on Play.
+  Bumping `targetSdk`/`compileSdk` usually drags AGP and Gradle along:
+  compileSdk 36 needs AGP 8.9+, which needs Gradle 8.11.1+ (the
+  workflows pin 8.13). `minSdk` stays at 33 — that is a Glyph SDK
+  requirement, not a Play one.
 
 ## Project layout
 

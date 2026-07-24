@@ -11,12 +11,14 @@ val ciVersionName = System.getenv("APP_VERSION_NAME") ?: "1.0.0-dev"
 
 android {
     namespace = "com.emberforge.generated.glyphplayground"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.ogbar.glyphplayground"
         minSdk = 33
-        targetSdk = 35
+        // Google Play requires apps to target Android 16 (API 36) from
+        // Aug 31, 2026. Keep this at the newest stable API level.
+        targetSdk = 36
         versionCode = ciVersionCode
         versionName = ciVersionName
     }
