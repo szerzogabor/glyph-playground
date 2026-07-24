@@ -1,5 +1,6 @@
 plugins {
-    id("com.android.application") version "8.7.3" apply false
+    // 8.9+ is the first AGP line that supports compileSdk 36 (Android 16).
+    id("com.android.application") version "8.9.3" apply false
     id("org.jetbrains.kotlin.android") version "2.0.21" apply false
     id("org.jetbrains.kotlin.plugin.compose") version "2.0.21" apply false
 }
