@@ -1,0 +1,55 @@
+name: PR build
+
+# Build check for pull requests. ci.yml only runs on pushes to main (it
+# publishes a GitHub Release), so without this a PR would land on main
+# entirely unbuilt — toolchain changes (AGP, Gradle, compileSdk) would
+# only fail after merge, taking that run's release APK with them.
+#
+# This job compiles the same signed release APK as ci.yml but publishes
+# nothing: no release, no tag, no keystore commit.
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  # Supersede an in-flight build when the PR is pushed to again.
+  group: pr-build-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build release APK
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.13'
+
+      # ci.yml generates and commits keystore/app-debug.keystore on its
+      # first run; a PR must never create or change it (a different key
+      # breaks in-place updates for anyone who installed a build).
+      - name: Verify signing keystore is present
+        run: |
+          if [ ! -f keystore/app-debug.keystore ]; then
+            echo "::error::keystore/app-debug.keystore is missing on this ref. Merge main into the branch — ci.yml generates and commits it." >&2
+            exit 1
+          fi
+
+      - name: Build release APK
+        env:
+          # Placeholder versioning: nothing is published from a PR, and
+          # the real values come from the run number on main.
+          APP_VERSION_CODE: 1
+          APP_VERSION_NAME: 0.0.0-pr${{ github.event.pull_request.number }}
+        run: gradle assembleRelease --no-daemon

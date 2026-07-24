@@ -41,6 +41,11 @@ On every push to `main`, `.github/workflows/ci.yml`:
 `versionCode` is `github.run_number`; `versionName` is
 `1.0.<run_number>`.
 
+On every pull request against `main`, `.github/workflows/pr-build.yml`
+runs the same `gradle assembleRelease` and publishes nothing — it exists
+so a broken build (especially a toolchain bump) fails on the PR instead
+of on `main`, where a failure also costs that run's release APK.
+
 ## Ground rules
 
 - **Do not touch `keystore/`.** CI generates this project's own
