@@ -2,6 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="com.nothing.ketchum.permission.ENABLE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE"/>
 
     <application
         android:allowBackup="true"
@@ -52,12 +54,13 @@
             Glyph Toy: the background-capable surface for the Glyph Matrix.
             The Glyph system binds this service when the toy is active and
             delivers Glyph-button events over a Messenger. Widget taps and the
-            in-app Glyph button also start it with show/hide commands, riding
-            on that binding instead of a special-use foreground service.
+            in-app Glyph button start it as a foreground service so it can be
+            launched even when the app process is dead.
         -->
         <service
             android:name=".widget.GlyphToyService"
             android:exported="true"
+            android:foregroundServiceType="specialUse"
             android:process=":glyphtoy">
             <intent-filter>
                 <action android:name="com.nothing.glyph.TOY" />
