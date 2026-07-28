@@ -1,15 +1,21 @@
 package com.emberforge.generated.glyphplayground.widget
 
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.app.Service
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.pm.ServiceInfo
+import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 import android.os.Message
 import android.os.Messenger
 import android.util.Log
+import com.emberforge.generated.glyphplayground.R
 import com.emberforge.generated.glyphplayground.GlyphController
 import com.emberforge.generated.glyphplayground.GlyphLayout
 import com.emberforge.generated.glyphplayground.GlyphPattern
@@ -30,11 +36,10 @@ import com.nothing.ketchum.GlyphToy
  *
  * Besides the Glyph-button events, the widget and the in-app "Glyph" button
  * also drive the matrix through this service via [show]/[hide] start commands.
- * A show keeps the service in the started state, holding its own
- * [GlyphMatrixManager] session, so the frame stays lit whether or not the
- * Glyph system currently has the toy bound — no foreground service (and no
- * FOREGROUND_SERVICE_SPECIAL_USE permission) needed. Hide (or the system
- * reclaiming the process) releases the session and the matrix.
+ * A show promotes the service to the foreground (low-priority notification) so
+ * it can be started even when the app process is dead, then keeps it in the
+ * started state holding its own [GlyphMatrixManager] session. Hide releases
+ * the foreground state and the session.
  */
 class GlyphToyService : Service() {
 
@@ -110,17 +115,12 @@ class GlyphToyService : Service() {
         super.onDestroy()
     }
 
-    /**
-     * Show keeps the service in the started state on purpose: the started
-     * service holds the [GlyphMatrixManager] session open, which is what keeps
-     * the frame lit when the Glyph system hasn't bound the toy. Stopping right
-     * after rendering (the previous behaviour) destroyed the service, whose
-     * cleanup turned the matrix straight back off — the in-app Glyph button
-     * appeared dead unless the toy happened to be active. Hide releases the
-     * started state again.
-     */
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        when (intent?.action) {
+        val action = intent?.action
+        if (action == ACTION_SHOW || action == ACTION_HIDE) {
+            promoteToForeground()
+        }
+        when (action) {
             ACTION_SHOW -> {
                 loadGlyphs()
                 isOn = true
@@ -141,6 +141,7 @@ class GlyphToyService : Service() {
                 shownFrame = null
                 if (connected) {
                     turnOff()
+                    stopForeground(STOP_FOREGROUND_REMOVE)
                     stopSelf()
                 } else {
                     pendingHide = true
@@ -170,6 +171,7 @@ class GlyphToyService : Service() {
                         if (pendingHide) {
                             turnOff()
                             pendingHide = false
+                            stopForeground(STOP_FOREGROUND_REMOVE)
                             stopSelf()
                         } else if (show != null) {
                             renderFrame(show.first, show.second)
@@ -218,6 +220,26 @@ class GlyphToyService : Service() {
         }
     }
 
+    private fun promoteToForeground() {
+        val nm = getSystemService(NotificationManager::class.java)
+        if (nm.getNotificationChannel(CHANNEL_ID) == null) {
+            nm.createNotificationChannel(
+                NotificationChannel(CHANNEL_ID, "Glyph Control", NotificationManager.IMPORTANCE_LOW)
+            )
+        }
+        val notification = Notification.Builder(this, CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setContentTitle(getString(R.string.app_name))
+            .setContentText(getString(R.string.glyph_active_notification))
+            .setOngoing(true)
+            .build()
+        if (Build.VERSION.SDK_INT >= 34) {
+            startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
+        } else {
+            startForeground(NOTIFICATION_ID, notification)
+        }
+    }
+
     private fun turnOff() {
         try {
             gm?.turnOff()
@@ -234,13 +256,9 @@ class GlyphToyService : Service() {
         private const val EXTRA_LEDS = "leds"
         private const val EXTRA_BRIGHTNESS_KEYS = "brightness_keys"
         private const val EXTRA_BRIGHTNESS_VALS = "brightness_vals"
+        private const val CHANNEL_ID = "glyph_control"
+        private const val NOTIFICATION_ID = 1
 
-        /**
-         * Lights [leds] on the matrix and keeps them lit until [hide].
-         * Callers are either foreground (MainActivity) or inside a widget-tap
-         * broadcast, both of which may start services; the catch covers any
-         * other background edge case rather than crashing the sender.
-         */
         fun show(context: Context, leds: Set<Int>, ledBrightness: Map<Int, Int> = emptyMap()) {
             val intent = Intent(context, GlyphToyService::class.java).apply {
                 action = ACTION_SHOW
@@ -251,19 +269,18 @@ class GlyphToyService : Service() {
                 }
             }
             try {
-                context.startService(intent)
+                context.startForegroundService(intent)
             } catch (e: Exception) {
                 Log.w(TAG, "Unable to deliver show command", e)
             }
         }
 
-        /** Clears the matrix and releases the started service. */
         fun hide(context: Context) {
             val intent = Intent(context, GlyphToyService::class.java).apply {
                 action = ACTION_HIDE
             }
             try {
-                context.startService(intent)
+                context.startForegroundService(intent)
             } catch (e: Exception) {
                 Log.w(TAG, "Unable to deliver hide command", e)
             }
