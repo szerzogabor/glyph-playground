@@ -53,3 +53,10 @@ jobs:
           APP_VERSION_CODE: 1
           APP_VERSION_NAME: 0.0.0-pr${{ github.event.pull_request.number }}
         run: gradle assembleRelease --no-daemon
+
+      # The Google Play build (forge app glyph-playground-play) configures
+      # Gradle Play Publisher and its own build type; bundling it here
+      # catches a broken Play setup before it reaches the release branch.
+      # No upload key on CI, so this bundle is unsigned and goes nowhere.
+      - name: Build Play AAB (unsigned)
+        run: gradle :app:bundlePlay --no-daemon

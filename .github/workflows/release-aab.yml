@@ -1,14 +1,16 @@
 name: Release AAB
 
-# Builds a signed Android App Bundle (.aab) and publishes it as a
-# downloadable workflow artifact (not a GitHub Release, unlike ci.yml
-# which builds an APK on every push to main).
+# Builds an Android App Bundle (.aab) signed with the committed DEBUG
+# keystore and publishes it as a downloadable workflow artifact, for local
+# testing (e.g. with bundletool).
 #
-# Runs automatically on every push (commit) to the release branch, and
-# can also be triggered manually from any branch via the Actions tab.
+# NOT for Google Play: the debug key and its password are public, so it
+# must never be the key Play trusts. Play uploads are the forge app
+# `glyph-playground-play` (tools/glyph-playground-play.forge.yaml), which
+# builds the release branch with the upload key kept on the build machine.
+# That is why this workflow no longer runs on pushes to release; it is
+# manual only (Actions tab).
 on:
-  push:
-    branches: [release]
   workflow_dispatch:
     inputs:
       ref:

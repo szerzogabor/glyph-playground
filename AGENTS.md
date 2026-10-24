@@ -44,7 +44,27 @@ On every push to `main`, `.github/workflows/ci.yml`:
 On every pull request against `main`, `.github/workflows/pr-build.yml`
 runs the same `gradle assembleRelease` and publishes nothing — it exists
 so a broken build (especially a toolchain bump) fails on the PR instead
-of on `main`, where a failure also costs that run's release APK.
+of on `main`, where a failure also costs that run's release APK. It also
+bundles the unsigned Google Play AAB (`gradle :app:bundlePlay`) so a
+broken Play setup fails there too.
+
+## Google Play
+
+Google Play is a separate channel, not CI:
+- The `play` build type (`:app:bundlePlay`) is signed with the **upload
+  key**, never with the committed debug keystore (that key and its
+  password are public). The key and the Play service account's JSON key
+  stay on the build machine, named by `GLYPH_UPLOAD_PROPERTIES` and
+  `GLYPH_PLAY_SERVICE_ACCOUNT` in its `~/.gradle/gradle.properties`.
+- The forge app `glyph-playground-play`
+  (`tools/glyph-playground-play.forge.yaml`) builds the **`release`
+  branch** on the `play-upload` machine and uploads it with Gradle Play
+  Publisher (`./gradlew :app:publishPlayBundle`) to the internal track.
+  Merging `main` into `release` is a Play release.
+- The Play `versionCode` is the commit count of the built ref
+  (`git rev-list --count HEAD`), so it needs a full clone.
+- `.github/workflows/release-aab.yml` is manual only and debug-signed:
+  for local testing, never for Play.
 
 ## Ground rules
 
@@ -52,8 +72,9 @@ of on `main`, where a failure also costs that run's release APK.
   persistent debug keystore there on the first run and commits it. Every
   build must keep signing with that same key, or installed copies can no
   longer update in place.
-- The app is signed with a committed debug keystore on purpose — this is
-  a demo distribution channel, not a Play Store release.
+- The `release` and `debug` builds are signed with the committed debug
+  keystore on purpose — the GitHub Release APK is a demo distribution
+  channel. The Play build never uses that key (see "Google Play").
 - **Keep `targetSdk` at the newest stable API level.** Google Play
   enforces a target API level floor every year (API 36 / Android 16 from
   Aug 31, 2026), and an app below it can no longer be updated on Play.
@@ -87,8 +108,11 @@ of on `main`, where a failure also costs that run's release APK.
 ## Building locally
 
 ```sh
-gradle assembleRelease
+./gradlew assembleRelease     # or: gradle assembleRelease (Gradle 8.13)
 ```
+
+The Gradle wrapper (8.13) is there for machines without Gradle on PATH,
+such as the forge nodes.
 
 There is no unit-test step in CI yet — add one (and tests) when the work
 calls for it.
