@@ -3,6 +3,8 @@ plugins {
     id("com.android.application") version "8.9.3" apply false
     id("org.jetbrains.kotlin.android") version "2.0.21" apply false
     id("org.jetbrains.kotlin.plugin.compose") version "2.0.21" apply false
+    // Gradle Play Publisher: uploads the `play` build to Google Play (see app/build.gradle.kts).
+    id("com.github.triplet.play") version "3.13.0" apply false
 }
 
 // Regenerates the Graphify knowledge graph (graphify-out/). AST-only, no API key.

@@ -1,0 +1,42 @@
+# The forge app `glyph-playground-play`: builds the play AAB and uploads it to Google Play (internal testing).
+# The hub keeps the live copy; after editing this file:
+#   forge app config glyph-playground-play tools/glyph-playground-play.forge.yaml
+#
+# Builds the `release` branch: a push there (a merge from main) is a Play upload. main keeps its own
+# channel, the debug-signed APK on GitHub Releases (.github/workflows/ci.yml).
+#
+# Runs only on a machine labelled play-upload (Tufi), which holds the two secrets outside the repository,
+# named in its ~/.gradle/gradle.properties:
+#   GLYPH_UPLOAD_PROPERTIES      the upload key's properties file (storeFile, storePassword, keyAlias, keyPassword)
+#   GLYPH_PLAY_SERVICE_ACCOUNT   the Play service account's JSON key (the one HOIST and m-vave-synth use)
+# Optional there: GLYPH_PLAY_TRACK (default internal), GLYPH_PLAY_DRAFT=true (upload as a draft release).
+# The versionCode is the commit count, so every new commit on release is a new upload; a rebuilt commit is skipped.
+apiVersion: forge/v1
+name: glyph-playground-play
+
+build:
+  requires:
+    - jdk>=17
+    - android-sdk
+    - play-upload
+
+  cache:
+    - "~/.gradle/caches"
+
+  # versionCode is the commit count (git rev-list --count HEAD): a shallow clone would always say 1.
+  # (forge turns 0 into the default 1, so the whole history is asked for with a big number.)
+  clone_depth: 100000
+  env:
+    GRADLE_OPTS: "-Xmx2g"
+
+  steps:
+    - name: publish
+      run: ./gradlew :app:publishPlayBundle --no-daemon
+
+  outputs:
+    - name: aab
+      path: app/build/outputs/bundle/play/*.aab
+
+release:
+  version_from: commit
+  channel: dev
